@@ -4,8 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/server/index.js",
+    "dev": "concurrently -k -n API,WEB -c cyan,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --watch src/server/index.js",
+    "dev:client": "vite",
     "start": "node src/server/index.js",
+    "build": "vite build",
     "gate:discovery": "node src/server/runDiscoveryGate.js",
     "gate:research": "node src/server/runResearchGate.js",
     "gate:rotation": "node src/server/runRotationGate.js",
@@ -14,6 +17,13 @@
   },
   "dependencies": {
     "dotenv": "^17.2.2",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.2",
+    "concurrently": "^9.2.1",
+    "vite": "^7.1.7"
   }
 }

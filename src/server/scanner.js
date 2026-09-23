@@ -1,6 +1,8 @@
 import { mapWithConcurrency } from "./concurrency.js";
 import { discoverTokens } from "./discovery.js";
 import { researchToken } from "./researchGate.js";
+import { detectRotations } from "./rotationEngine.js";
+import { scoreTokens } from "./scoringEngine.js";
 
 export async function scanAllTokens(nansenClient, options = {}) {
   const scanStartedAt = new Date();
@@ -50,6 +52,8 @@ export async function scanAllTokens(nansenClient, options = {}) {
     }
   }
 
+  const rotations = detectRotations(tokens);
+  const rankedTokens = scoreTokens(tokens, rotations);
   return {
     scanStartedAt: scanStartedAt.toISOString(),
     scanCompletedAt: new Date().toISOString(),
@@ -60,7 +64,8 @@ export async function scanAllTokens(nansenClient, options = {}) {
     tokensAnalyzed: tokens.length,
     tokensFailed: failures.length,
     maximumConcurrentRequests: pool.maximumConcurrentRequests,
-    tokens,
+    tokens: rankedTokens,
+    rotations,
     failures,
   };
 }

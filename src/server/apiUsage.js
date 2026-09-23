@@ -24,7 +24,7 @@ async function appendUsage(usagePath, entry) {
 }
 
 export function trackNansenUsage(client, { usagePath = defaultUsagePath } = {}) {
-  const current = { calls: 0, latencies: [], rateLimitEvents: 0 };
+  const current = { calls: 0, attempts: 0, transportFailures: 0, latencies: [], rateLimitEvents: 0 };
   return {
     current,
     async post(endpoint, body) {
@@ -44,9 +44,14 @@ export function trackNansenUsage(client, { usagePath = defaultUsagePath } = {}) 
         throw error;
       } finally {
         const latency = performance.now() - startedAt;
-        current.calls += 1;
+        current.attempts += 1;
         current.latencies.push(latency);
-        await appendUsage(usagePath, { timestamp: new Date().toISOString(), endpoint, status, latencyMs: latency, success, creditsUsed: meta?.creditsUsed ?? meta?.creditsCost ?? null });
+        if (status === null || status === undefined) {
+          current.transportFailures += 1;
+        } else {
+          current.calls += 1;
+          await appendUsage(usagePath, { timestamp: new Date().toISOString(), endpoint, status, latencyMs: latency, success, creditsUsed: meta?.creditsUsed ?? meta?.creditsCost ?? null });
+        }
       }
     },
   };

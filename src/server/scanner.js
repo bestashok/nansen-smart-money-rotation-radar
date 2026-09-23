@@ -27,9 +27,10 @@ export async function scanAllTokens(nansenClient, options = {}) {
     };
   }
 
+  const tokensToResearch = discovery.tokens.slice(0, options.maxTokens ?? discovery.tokens.length);
   const researchStartedAt = performance.now();
   const pool = await mapWithConcurrency(
-    discovery.tokens,
+    tokensToResearch,
     (token) => researchToken(nansenClient, token, { now: options.now ?? new Date() }),
     { concurrency: options.concurrency },
   );
@@ -38,7 +39,7 @@ export async function scanAllTokens(nansenClient, options = {}) {
   const tokens = [];
   const failures = [];
   for (const [index, outcome] of pool.results.entries()) {
-    const discoveredToken = discovery.tokens[index];
+    const discoveredToken = tokensToResearch[index];
     if (outcome.status === "fulfilled" && outcome.value.passed) {
       tokens.push(outcome.value);
     } else {
@@ -61,6 +62,7 @@ export async function scanAllTokens(nansenClient, options = {}) {
     discoveryDurationMs,
     researchDurationMs,
     tokensDiscovered: discovery.tokens.length,
+    tokensSelectedForResearch: tokensToResearch.length,
     tokensAnalyzed: tokens.length,
     tokensFailed: failures.length,
     maximumConcurrentRequests: pool.maximumConcurrentRequests,

@@ -3,6 +3,7 @@ import { createNansenClient } from "./nansenClient.js";
 import { scanAllTokens } from "./scanner.js";
 import { readHistory, readLatest, saveScan } from "./dataStore.js";
 import { readUsage, trackNansenUsage } from "./apiUsage.js";
+import { withCreditBudget } from "./creditBudget.js";
 
 export function createApp() {
   const app = express();
@@ -25,12 +26,13 @@ export function createApp() {
     status.phase = "DISCOVERING_TOKENS";
     status.message = "Discovering qualifying tokens with Nansen.";
     const tracked = trackNansenUsage(createNansenClient());
-    scanAllTokens(tracked)
+    const budgeted = withCreditBudget(tracked, 200);
+    scanAllTokens(budgeted, { maxTokens: 2, concurrency: 2 })
       .then(async (result) => {
         const averageApiLatencyMs = tracked.current.latencies.length
           ? tracked.current.latencies.reduce((sum, value) => sum + value, 0) / tracked.current.latencies.length
           : 0;
-        Object.assign(result, { liveApiCalls: tracked.current.calls, cacheHits: 0, averageApiLatencyMs, rateLimitEvents: tracked.current.rateLimitEvents });
+        Object.assign(result, { liveApiCalls: tracked.current.calls, cacheHits: 0, averageApiLatencyMs, rateLimitEvents: tracked.current.rateLimitEvents, creditBudget: budgeted.usage() });
         await saveScan(result);
         Object.assign(status, { running: false, phase: "SCAN_COMPLETE", message: `Scan complete — ${result.tokensDiscovered} qualifying tokens found.` });
       })

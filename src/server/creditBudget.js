@@ -1,6 +1,9 @@
 const FREE_PLAN_COSTS = Object.freeze({
   "/api/v1/token-screener": 10,
   "/api/v1/tgm/who-bought-sold": 10,
+  "/api/v1/tgm/flow-intelligence": 10,
+  "/api/v1/tgm/flows": 10,
+  "/api/v1/tgm/holders": 50,
 });
 
 export function withCreditBudget(nansenClient, limit = 100) {

@@ -49,7 +49,7 @@ export default function App() {
   return <main>
     <header><div><p className="eyebrow">NANSEN · MULTI-CHAIN INTELLIGENCE</p><h1>SMART MONEY<br /><em>ROTATION RADAR</em></h1><p className="subtitle">See where Smart Money appears to be rotating before the crowd.</p></div><button disabled={status.running} onClick={runScan}>{status.running ? "SCAN IN PROGRESS" : "RUN LIVE SCAN"}</button></header>
 
-    <section className={`status ${status.phase === "FAILED" ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")}</label><strong>{status.message}</strong></div></section>
+    <section className={`status ${status.phase === "FAILED" ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")} · HARD CAP 200 CREDITS</label><strong>{status.message}</strong></div></section>
 
     <section className="metrics">
       <article><label>Qualifying tokens</label><strong>{results?.tokensDiscovered ?? "—"}</strong></article>

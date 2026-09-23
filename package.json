@@ -7,6 +7,7 @@
     "dev": "node --watch src/server/index.js",
     "start": "node src/server/index.js",
     "gate:discovery": "node src/server/runDiscoveryGate.js",
+    "gate:research": "node src/server/runResearchGate.js",
     "test": "node --test"
   },
   "dependencies": {

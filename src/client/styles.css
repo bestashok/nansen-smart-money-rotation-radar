@@ -48,6 +48,15 @@ td { padding: 13px 9px; border-bottom: 1px solid #1c2521; white-space: nowrap; }
 tr { cursor: pointer; }
 tr:hover, tr.selected { background: #17221d; }
 code { font: 11px DM Mono; color: #9db2a8; }
+.contract-address { display: inline-flex; min-width: 0; align-items: center; gap: 6px; }
+.contract-address code { overflow: hidden; text-overflow: ellipsis; }
+.copy-button { display: inline-grid; width: 24px; height: 24px; flex: 0 0 24px; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 3px; background: transparent; color: #7f9189; }
+.copy-button:hover { border-color: #3f554b; background: #1c2923; color: #71f5b4; }
+.copy-button:focus-visible { outline: 2px solid #71f5b4; outline-offset: 2px; }
+.copy-button.copied { color: #71f5b4; }
+.copy-button.error { color: #ff777c; }
+.copy-button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .positive { color: #71f5b4; }
 .negative { color: #ff777c; }
 .pill { font: 500 9px DM Mono; padding: 5px 7px; border: 1px solid #53625b; }

@@ -1,0 +1,15 @@
+{
+  "name": "nansen-smart-money-rotation-radar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server/index.js",
+    "start": "node src/server/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0"
+  }
+}

@@ -15,5 +15,11 @@ test("credit budget refuses calls that could exceed 100 free-plan credits", asyn
     /would exceed 100/,
   );
   assert.equal(client.usage().reservedCredits, 100);
+  assert.equal(client.usage().remainingCredits, 0);
   assert.equal(client.usage().calls.length, 10);
+});
+
+test("credit budget validates user-selected limits", () => {
+  assert.throws(() => withCreditBudget({ post() {} }, 9), /at least 10/);
+  assert.throws(() => withCreditBudget({ post() {} }, 10.5), /whole number/);
 });

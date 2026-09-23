@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   discoverTokens,
-  DISCOVERY_LIMIT,
+  DISCOVERY_PAGE_SIZE,
   DISCOVERY_REQUEST,
   TOKEN_SCREENER_ENDPOINT,
 } from "../src/server/discovery.js";
 import { createNansenClient, NansenApiError } from "../src/server/nansenClient.js";
 
-test("discovery requests up to 25 screener results and normalizes fields", async () => {
+test("discovery requests a documented page size and normalizes fields", async () => {
   let request;
   const nansenClient = {
     async post(endpoint, body) {
@@ -23,7 +23,7 @@ test("discovery requests up to 25 screener results and normalizes fields", async
             liquidity: 200_000,
             netflow: 50_000,
           }],
-          pagination: { page: 1, per_page: 25, is_last_page: true },
+          pagination: { page: 1, per_page: 20, is_last_page: true },
         },
         meta: { status: 200 },
       };
@@ -32,9 +32,9 @@ test("discovery requests up to 25 screener results and normalizes fields", async
 
   const result = await discoverTokens(nansenClient);
 
-  assert.equal(DISCOVERY_LIMIT, 25);
+  assert.equal(DISCOVERY_PAGE_SIZE, 20);
   assert.equal(request.endpoint, TOKEN_SCREENER_ENDPOINT);
-  assert.equal(request.body.pagination.per_page, 25);
+  assert.equal(request.body.pagination.per_page, 20);
   assert.equal(request.body.filters.trader_type, "sm");
   assert.equal(request.body.filters.include_stablecoins, false);
   assert.deepEqual(result.tokens[0], {
@@ -45,6 +45,35 @@ test("discovery requests up to 25 screener results and normalizes fields", async
     liquidityUsd: 200_000,
     netflowUsd: 50_000,
   });
+});
+
+test("discovery paginates until Nansen reports the last page", async () => {
+  const pages = [];
+  const result = await discoverTokens({
+    async post(_endpoint, body) {
+      pages.push(body.pagination.page);
+      const page = body.pagination.page;
+      return {
+        data: {
+          data: [{
+            token_symbol: `PAGE${page}`,
+            chain: "base",
+            token_address: `0x${page}`,
+            market_cap_usd: 2_000_000,
+            liquidity: 200_000,
+            netflow: 50_000,
+          }],
+          pagination: { page, per_page: 20, is_last_page: page === 2 },
+        },
+        meta: { status: 200 },
+      };
+    },
+  });
+
+  assert.deepEqual(pages, [1, 2]);
+  assert.deepEqual(result.tokens.map((token) => token.symbol), ["PAGE1", "PAGE2"]);
+  assert.equal(result.pagesFetched, 2);
+  assert.equal(result.stoppedByBudget, false);
 });
 
 test("discovery accepts zero qualifying tokens", async () => {

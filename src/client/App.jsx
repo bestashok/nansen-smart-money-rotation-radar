@@ -29,7 +29,14 @@ export default function App() {
   const [results, setResults] = useState(null);
   const [usage, setUsage] = useState({ cumulativeRealNansenApiCalls: 0 });
   const [selectedAddress, setSelectedAddress] = useState(null);
+  const [creditLimit, setCreditLimit] = useState("200");
+  const [scanError, setScanError] = useState("");
   const selected = useMemo(() => results?.tokens?.find((item) => item.token.contractAddress === selectedAddress) ?? results?.tokens?.[0], [results, selectedAddress]);
+  const tableRows = useMemo(() => {
+    const researched = new Map((results?.tokens ?? []).map((item) => [`${item.token.chain}:${item.token.contractAddress}`, item]));
+    const discovered = results?.discoveredTokens ?? (results?.tokens ?? []).map((item) => item.token);
+    return discovered.map((token) => ({ token, research: researched.get(`${token.chain}:${token.contractAddress}`) ?? null }));
+  }, [results]);
 
   async function refresh() {
     const [nextStatus, nextResults, nextUsage] = await Promise.all([
@@ -42,25 +49,37 @@ export default function App() {
   useEffect(() => { refresh(); const timer = setInterval(refresh, 1500); return () => clearInterval(timer); }, []);
 
   async function runScan() {
-    await fetch("/api/scan", { method: "POST" });
+    setScanError("");
+    const response = await fetch("/api/scan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ creditLimit: Number(creditLimit) }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      setScanError(body.error ?? "The scan could not be started.");
+      return;
+    }
     await refresh();
   }
 
   return <main>
-    <header><div><p className="eyebrow">NANSEN · MULTI-CHAIN INTELLIGENCE</p><h1>SMART MONEY<br /><em>ROTATION RADAR</em></h1><p className="subtitle">See where Smart Money appears to be rotating before the crowd.</p></div><button disabled={status.running} onClick={runScan}>{status.running ? "SCAN IN PROGRESS" : "RUN LIVE SCAN"}</button></header>
+    <header><div><p className="eyebrow">NANSEN · MULTI-CHAIN INTELLIGENCE</p><h1>SMART MONEY<br /><em>ROTATION RADAR</em></h1><p className="subtitle">See where Smart Money appears to be rotating before the crowd.</p></div><div className="scan-controls"><label>Maximum Nansen credits<input type="number" min="10" max="200" step="10" value={creditLimit} disabled={status.running} onChange={(event) => setCreditLimit(event.target.value)} /></label><small>Maximum 200 · no token-count limit · approximately 90 credits per fully researched token</small><button disabled={status.running || !Number.isSafeInteger(Number(creditLimit)) || Number(creditLimit) < 10 || Number(creditLimit) > 200} onClick={runScan}>{status.running ? "SCAN IN PROGRESS" : "RUN LIVE SCAN"}</button></div></header>
 
-    <section className={`status ${status.phase === "FAILED" ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")} · HARD CAP 200 CREDITS</label><strong>{status.message}</strong></div></section>
+    <section className={`status ${status.phase === "FAILED" || scanError ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")} · HARD CAP {status.creditLimit ?? creditLimit} CREDITS</label><strong>{scanError || status.message}</strong></div></section>
 
     <section className="metrics">
       <article><label>Qualifying tokens</label><strong>{results?.tokensDiscovered ?? "—"}</strong></article>
       <article><label>Analyzed</label><strong>{results?.tokensAnalyzed ?? "—"}</strong></article>
+      <article><label>Skipped by budget</label><strong>{results?.tokensSkippedByBudget ?? "—"}</strong></article>
+      <article><label>Credits reserved</label><strong>{results?.creditBudget ? `${results.creditBudget.reservedCredits}/${results.creditBudget.limit}` : "—"}</strong></article>
       <article><label>Current scan calls</label><strong>{results?.liveApiCalls ?? "—"}</strong></article>
       <article><label>Cumulative real calls</label><strong>{usage.cumulativeRealNansenApiCalls ?? 0}</strong></article>
       <article><label>Total time</label><strong>{results ? `${(results.totalDurationMs / 1000).toFixed(1)}s` : "—"}</strong></article>
     </section>
 
-    <section className="panel"><div className="panel-title"><div><p>DISCOVERED TOKENS</p><h2>Evidence-ranked opportunities</h2></div><span>{results?.tokens?.length ?? 0} rows</span></div>
-      {!results?.tokens?.length ? <div className="empty">No completed scan results yet. Run a live scan to populate real Nansen evidence.</div> : <div className="table-wrap"><table><thead><tr><th>#</th><th>Token</th><th>Chain</th><th>Contract</th><th>Market cap</th><th>Liquidity</th><th>Netflow</th><th>Buyers</th><th>Sellers</th><th>Score</th><th>State</th></tr></thead><tbody>{results.tokens.map((item, index) => <tr key={`${item.token.chain}-${item.token.contractAddress}`} onClick={() => setSelectedAddress(item.token.contractAddress)} className={selected?.token.contractAddress === item.token.contractAddress ? "selected" : ""}><td>{index + 1}</td><td><b>{item.token.symbol}</b></td><td>{item.token.chain}</td><td><code title={item.token.contractAddress}>{shortAddress(item.token.contractAddress)}</code></td><td>{compact.format(item.token.marketCapUsd ?? 0)}</td><td>{compact.format(item.token.liquidityUsd ?? 0)}</td><td className={(item.token.netflowUsd ?? 0) >= 0 ? "positive" : "negative"}>{money.format(item.token.netflowUsd ?? 0)}</td><td>{item.buyers.length}</td><td>{item.sellers.length}</td><td><b>{item.score}</b></td><td><span className={`pill ${item.state}`}>{item.state}</span></td></tr>)}</tbody></table></div>}
+    <section className="panel"><div className="panel-title"><div><p>DISCOVERED TOKENS</p><h2>Every qualifying token returned by Nansen</h2></div><span>{tableRows.length} rows</span></div>
+      {!tableRows.length ? <div className="empty">No completed scan results yet. Run a live scan to populate real Nansen evidence.</div> : <div className="table-wrap"><table><thead><tr><th>#</th><th>Token</th><th>Chain</th><th>Contract</th><th>Market cap</th><th>Liquidity</th><th>Netflow</th><th>Buyers</th><th>Sellers</th><th>Score</th><th>State</th><th>Status</th></tr></thead><tbody>{tableRows.map(({ token, research }, index) => <tr key={`${token.chain}-${token.contractAddress}`} onClick={() => research && setSelectedAddress(token.contractAddress)} className={selected?.token.contractAddress === token.contractAddress ? "selected" : ""}><td>{index + 1}</td><td><b>{token.symbol}</b></td><td>{token.chain}</td><td><code title={token.contractAddress}>{shortAddress(token.contractAddress)}</code></td><td>{compact.format(token.marketCapUsd ?? 0)}</td><td>{compact.format(token.liquidityUsd ?? 0)}</td><td className={(token.netflowUsd ?? 0) >= 0 ? "positive" : "negative"}>{money.format(token.netflowUsd ?? 0)}</td><td>{research?.buyers.length ?? "—"}</td><td>{research?.sellers.length ?? "—"}</td><td><b>{research?.score ?? "—"}</b></td><td>{research ? <span className={`pill ${research.state}`}>{research.state}</span> : "—"}</td><td><span className={`scan-state ${research ? "complete" : "skipped"}`}>{research ? "ANALYZED" : "SKIPPED · BUDGET"}</span></td></tr>)}</tbody></table></div>}
     </section>
 
     <div className="split"><section className="panel"><div className="panel-title"><div><p>ROTATION MAP</p><h2>Observed wallet overlap</h2></div></div><RotationMap rotations={results?.rotations} /></section><section className="panel"><div className="panel-title"><div><p>TOKEN EVIDENCE</p><h2>{selected?.token.symbol ?? "Select a token"}</h2></div></div><TokenDetail item={selected} /></section></div>

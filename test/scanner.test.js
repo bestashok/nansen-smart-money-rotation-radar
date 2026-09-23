@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { scanAllTokens } from "../src/server/scanner.js";
+import { withCreditBudget } from "../src/server/creditBudget.js";
 
 function record(symbol, address) {
   return {
@@ -53,4 +54,22 @@ test("scanner completes normally when discovery returns zero tokens", async () =
   assert.equal(result.tokensDiscovered, 0);
   assert.equal(result.tokensAnalyzed, 0);
   assert.equal(result.tokensFailed, 0);
+});
+
+test("scanner researches only complete tokens affordable within the selected budget", async () => {
+  const budgeted = withCreditBudget(
+    clientWithTokens([record("ONE", "0x1"), record("TWO", "0x2"), record("THREE", "0x3")]),
+    200,
+  );
+  const result = await scanAllTokens(budgeted, {
+    creditBudget: budgeted,
+    concurrency: 10,
+    now: new Date("2026-09-23T12:00:00Z"),
+  });
+
+  assert.equal(result.tokensDiscovered, 3);
+  assert.equal(result.tokensSelectedForResearch, 2);
+  assert.equal(result.tokensAnalyzed, 2);
+  assert.equal(result.tokensSkippedByBudget, 1);
+  assert.equal(budgeted.usage().reservedCredits, 190);
 });

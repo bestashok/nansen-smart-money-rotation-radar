@@ -1,7 +1,7 @@
 # 30–60 Second Demo
 
 - **0–5s:** Double-click `Start Radar.bat`; the browser opens automatically.
-- **5–10s:** Show the title and click **Run Live Scan**.
+- **5–10s:** Show the 200-credit default, then click **Run Live Scan**.
 - **10–20s:** Show live discovery status and real token symbols/contracts.
 - **20–30s:** Show researched buyer/seller counts and the real API-call counter.
 - **30–40s:** Show token count, failures, duration, and cumulative genuine calls.

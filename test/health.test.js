@@ -16,3 +16,35 @@ test("GET /api/health reports a healthy service", async (t) => {
   assert.equal(body.service, "nansen-smart-money-rotation-radar");
   assert.match(body.timestamp, /^\d{4}-\d{2}-\d{2}T/);
 });
+
+test("POST /api/scan rejects an invalid credit limit before contacting Nansen", async (t) => {
+  const server = createApp().listen(0);
+  t.after(() => server.close());
+  await new Promise((resolve) => server.once("listening", resolve));
+  const { port } = server.address();
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/scan`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ creditLimit: 9 }),
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.match(body.error, /creditLimit/);
+});
+
+test("POST /api/scan rejects a credit limit above the 200-credit hard cap", async (t) => {
+  const server = createApp().listen(0);
+  t.after(() => server.close());
+  await new Promise((resolve) => server.once("listening", resolve));
+  const { port } = server.address();
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/scan`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ creditLimit: 201 }),
+  });
+
+  assert.equal(response.status, 400);
+});

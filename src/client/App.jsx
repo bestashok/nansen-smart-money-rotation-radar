@@ -28,6 +28,7 @@ export default function App() {
   const [status, setStatus] = useState({ phase: "IDLE", running: false, message: "Ready for a live scan." });
   const [results, setResults] = useState(null);
   const [usage, setUsage] = useState({ cumulativeRealNansenApiCalls: 0 });
+  const [campaign, setCampaign] = useState({ targetApiCalls: 1000, cumulativeRealNansenApiCalls: 0, callsRemaining: 1000, completedRuns: 0, latest: null, canRun: true });
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [creditLimit, setCreditLimit] = useState("200");
   const [scanError, setScanError] = useState("");
@@ -39,12 +40,13 @@ export default function App() {
   }, [results]);
 
   async function refresh() {
-    const [nextStatus, nextResults, nextUsage] = await Promise.all([
+    const [nextStatus, nextResults, nextUsage, nextCampaign] = await Promise.all([
       fetch("/api/status").then((r) => r.json()),
       fetch("/api/results").then((r) => r.json()),
       fetch("/api/usage").then((r) => r.json()),
+      fetch("/api/campaign").then((r) => r.json()),
     ]);
-    setStatus(nextStatus); setResults(nextResults); setUsage(nextUsage);
+    setStatus(nextStatus); setResults(nextResults); setUsage(nextUsage); setCampaign(nextCampaign);
   }
   useEffect(() => { refresh(); const timer = setInterval(refresh, 1500); return () => clearInterval(timer); }, []);
 
@@ -63,6 +65,21 @@ export default function App() {
     await refresh();
   }
 
+  async function runCampaign() {
+    setScanError("");
+    const response = await fetch("/api/campaign", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ creditLimit: Number(creditLimit) }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      setScanError(body.error ?? "The market snapshot could not be started.");
+      return;
+    }
+    await refresh();
+  }
+
   return <main>
     <header><div><p className="eyebrow">NANSEN · MULTI-CHAIN INTELLIGENCE</p><h1>SMART MONEY<br /><em>ROTATION RADAR</em></h1><p className="subtitle">See where Smart Money appears to be rotating before the crowd.</p></div><div className="scan-controls"><label>Maximum Nansen credits<input type="number" min="10" max="200" step="10" value={creditLimit} disabled={status.running} onChange={(event) => setCreditLimit(event.target.value)} /></label><small>Maximum 200 · no token-count limit · approximately 90 credits per fully researched token</small><button disabled={status.running || !Number.isSafeInteger(Number(creditLimit)) || Number(creditLimit) < 10 || Number(creditLimit) > 200} onClick={runScan}>{status.running ? "SCAN IN PROGRESS" : "RUN LIVE SCAN"}</button></div></header>
 
@@ -76,6 +93,11 @@ export default function App() {
       <article><label>Current scan calls</label><strong>{results?.liveApiCalls ?? "—"}</strong></article>
       <article><label>Cumulative real calls</label><strong>{usage.cumulativeRealNansenApiCalls ?? 0}</strong></article>
       <article><label>Total time</label><strong>{results ? `${(results.totalDurationMs / 1000).toFixed(1)}s` : "—"}</strong></article>
+    </section>
+
+    <section className="panel campaign-panel"><div className="panel-title"><div><p>MARKET SNAPSHOT CAMPAIGN</p><h2>Broader wallet coverage · 1,000 genuine-call target</h2></div><span>{campaign.completedRuns} completed cycles</span></div>
+      <div className="campaign-layout"><div><div className="campaign-count"><strong>{campaign.cumulativeRealNansenApiCalls ?? 0}</strong><span>/ {campaign.targetApiCalls ?? 1000} REAL CALLS</span></div><div className="progress"><i style={{ width: `${Math.min(100, ((campaign.cumulativeRealNansenApiCalls ?? 0) / (campaign.targetApiCalls || 1000)) * 100)}%` }} /></div><p>Each cycle uses the selected hard cap to collect BUY/SELL wallet evidence across a broader token set, then tests genuine cross-token overlap. A 15-minute cooldown prevents duplicate snapshots.</p></div><div className="campaign-action"><button className="secondary" disabled={status.running || !campaign.canRun || Number(creditLimit) < 10 || Number(creditLimit) > 200} onClick={runCampaign}>{campaign.callsRemaining === 0 ? "TARGET COMPLETE" : "RUN MARKET SNAPSHOT"}</button><small>{campaign.callsRemaining ?? 1000} calls remaining{!campaign.canRun && campaign.callsRemaining > 0 && campaign.nextEligibleAt ? ` · next cycle ${new Date(campaign.nextEligibleAt).toLocaleTimeString()}` : ""}</small></div></div>
+      {campaign.latest && <div className="campaign-latest"><span>Latest: {campaign.latest.tokensPairedForResearch} tokens with BUY/SELL pairs · {campaign.latest.liveApiCalls} live calls · {campaign.latest.creditBudget?.reservedCredits ?? 0}/{campaign.latest.creditBudget?.limit ?? 200} credits reserved</span><RotationMap rotations={campaign.latest.rotations} /></div>}
     </section>
 
     <section className="panel"><div className="panel-title"><div><p>DISCOVERED TOKENS</p><h2>Every qualifying token returned by Nansen</h2></div><span>{tableRows.length} rows</span></div>

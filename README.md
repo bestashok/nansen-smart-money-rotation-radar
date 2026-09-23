@@ -16,6 +16,8 @@ Normal use is intentionally simple:
 Double-click Start Radar.bat → browser opens → choose 10–200 credits → Run Live Scan
 ```
 
+The dashboard also includes a separate **Market Snapshot Campaign** for the [buildathon's 1,000-call requirement](https://nansen.ai/campaigns/meridian-buildathon#submit). It keeps the same 200-credit maximum, broadens wallet research to as many as nine tokens per cycle, records real cross-token overlaps, and enforces a 15-minute cooldown between snapshots.
+
 ## What the project answers
 
 Most screeners answer “which token is moving?” Rotation Radar asks a different question:
@@ -126,6 +128,28 @@ Examples:
 
 The scanner starts a research batch only when the conservative budget can fund complete 90-credit token research. HTTP 429 retries are separately budgeted, bounded, and respect `Retry-After`. The hard cap is never exceeded.
 
+## 1,000-call Market Snapshot Campaign
+
+The buildathon campaign mode is meaningful research—not an API-call generator. With a 200-credit cap, one uncached cycle performs up to 20 calls:
+
+```text
+1 Token Screener snapshot
++ BUY and SELL wallet research across up to 9 tokens
++ remaining flow-context calls when the discovered universe is smaller
+= up to 20 genuine Nansen calls
+```
+
+Every cycle produces a timestamped wallet snapshot and tests cross-token seller/buyer overlap across a much broader universe than the deep scan. The dashboard shows progress from the locally persisted genuine-call counter toward 1,000.
+
+Safety rules:
+
+- the per-cycle credit maximum remains 200
+- a separate call-target guard prevents retries from exceeding the remaining calls to 1,000
+- a 15-minute cooldown prevents duplicate snapshots inside the cache window
+- cache hits do not count toward the target
+- the campaign stops accepting runs when the genuine counter reaches 1,000
+- the user must start each cycle; the app never spends credits unattended
+
 ## Dashboard evidence
 
 The browser dashboard shows:
@@ -178,6 +202,8 @@ npm run dev
 | GET | `/api/rotations` | Latest rotation edges |
 | GET | `/api/usage` | Genuine Nansen call history |
 | GET | `/api/history` | Summarized scan history |
+| POST | `/api/campaign` | Run one credit-capped market snapshot cycle |
+| GET | `/api/campaign` | Read 1,000-call progress, cooldown and latest campaign evidence |
 
 ## Reliability and privacy
 
@@ -198,7 +224,7 @@ npm run build
 
 Current release status:
 
-- 27 automated tests passing
+- 32 automated tests passing
 - production build passing
 - npm production dependency audit: zero known vulnerabilities at release time
 - one-click launcher verified locally

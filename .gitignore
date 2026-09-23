@@ -7,5 +7,6 @@ data/cache.json
 data/latest-results.json
 data/scan-history.json
 data/api-usage.json
+data/campaign-history.json
 data/*.tmp
 npm-debug.log*

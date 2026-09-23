@@ -12,6 +12,8 @@ Recorded example: [demo/nansen-rotation-radar-demo.mp4](demo/nansen-rotation-rad
 
 Say: “Rotations are inferred from the same Smart Money wallets selling one token and buying another; the app does not claim direct fund transfers.”
 
+Optional second clip: show the **Market Snapshot Campaign** progress bar, explain that each cycle keeps the 200-credit maximum, and show the latest broad wallet-overlap result. Do not click it again until the displayed cooldown expires.
+
 ## Recording rules
 
 - Keep the full dashboard visible and do not edit the displayed evidence.

@@ -1,14 +1,29 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const usagePath = path.resolve("data/api-usage.json");
+const defaultUsagePath = path.resolve("data/api-usage.json");
+let usageWriteQueue = Promise.resolve();
 
-async function readUsage() {
+async function loadUsage(usagePath) {
   try { return JSON.parse(await readFile(usagePath, "utf8")); }
   catch { return { cumulativeRealNansenApiCalls: 0, calls: [] }; }
 }
 
-export function trackNansenUsage(client) {
+async function appendUsage(usagePath, entry) {
+  usageWriteQueue = usageWriteQueue.catch(() => {}).then(async () => {
+    const usage = await loadUsage(usagePath);
+    usage.cumulativeRealNansenApiCalls += 1;
+    usage.calls.push(entry);
+    usage.calls = usage.calls.slice(-1000);
+    await mkdir(path.dirname(usagePath), { recursive: true });
+    const temporaryPath = `${usagePath}.tmp`;
+    await writeFile(temporaryPath, JSON.stringify(usage, null, 2));
+    await rename(temporaryPath, usagePath);
+  });
+  return usageWriteQueue;
+}
+
+export function trackNansenUsage(client, { usagePath = defaultUsagePath } = {}) {
   const current = { calls: 0, latencies: [], rateLimitEvents: 0 };
   return {
     current,
@@ -31,15 +46,13 @@ export function trackNansenUsage(client) {
         const latency = performance.now() - startedAt;
         current.calls += 1;
         current.latencies.push(latency);
-        const usage = await readUsage();
-        usage.cumulativeRealNansenApiCalls += 1;
-        usage.calls.push({ timestamp: new Date().toISOString(), endpoint, status, latencyMs: latency, success, creditsUsed: meta?.creditsUsed ?? meta?.creditsCost ?? null });
-        usage.calls = usage.calls.slice(-1000);
-        await mkdir(path.dirname(usagePath), { recursive: true });
-        await writeFile(usagePath, JSON.stringify(usage, null, 2));
+        await appendUsage(usagePath, { timestamp: new Date().toISOString(), endpoint, status, latencyMs: latency, success, creditsUsed: meta?.creditsUsed ?? meta?.creditsCost ?? null });
       }
     },
   };
 }
 
-export { readUsage };
+export async function readUsage({ usagePath = defaultUsagePath } = {}) {
+  await usageWriteQueue;
+  return loadUsage(usagePath);
+}

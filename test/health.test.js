@@ -48,3 +48,18 @@ test("POST /api/scan rejects a credit limit above the 200-credit hard cap", asyn
 
   assert.equal(response.status, 400);
 });
+
+test("POST /api/campaign keeps the same 200-credit hard cap", async (t) => {
+  const server = createApp().listen(0);
+  t.after(() => server.close());
+  await new Promise((resolve) => server.once("listening", resolve));
+  const { port } = server.address();
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/campaign`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ creditLimit: 201 }),
+  });
+
+  assert.equal(response.status, 400);
+});

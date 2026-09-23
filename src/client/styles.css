@@ -26,6 +26,17 @@ button:disabled { opacity: .45; }
 .metrics article, .panel { background: #101614; border: 1px solid #25322d; }
 .metrics article { padding: 18px; }
 .metrics strong { display: block; font-size: 28px; margin-top: 10px; }
+.campaign-panel { border-color: #315447; background: linear-gradient(120deg, #101614, #10241c); }
+.campaign-layout { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 30px; }
+.campaign-layout p { max-width: 760px; margin: 10px 0 0; color: #8fa098; font-size: 13px; line-height: 1.6; }
+.campaign-count { display: flex; align-items: baseline; gap: 10px; }
+.campaign-count strong { color: #71f5b4; font-size: 38px; }
+.campaign-count span, .campaign-action small, .campaign-latest > span { font: 10px DM Mono; color: #82938b; }
+.progress { height: 6px; max-width: 600px; margin-top: 10px; overflow: hidden; background: #26312c; }
+.progress i { display: block; height: 100%; background: #71f5b4; transition: width .3s ease; }
+.campaign-action { display: flex; min-width: 250px; flex-direction: column; gap: 9px; text-align: center; }
+button.secondary { border: 1px solid #71f5b4; background: transparent; color: #71f5b4; }
+.campaign-latest { display: grid; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #2d4037; }
 .panel { padding: 22px; margin-bottom: 20px; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
 .panel-title p { margin: 0; color: #71f5b4; }
@@ -63,5 +74,7 @@ footer { text-align: center; color: #617068; font-size: 12px; padding: 20px; }
   header { display: block; }
   .scan-controls { margin-top: 18px; }
   .metrics { grid-template-columns: repeat(2, 1fr); }
+  .campaign-layout { grid-template-columns: 1fr; }
+  .campaign-action { min-width: 0; }
   .split { grid-template-columns: 1fr; }
 }

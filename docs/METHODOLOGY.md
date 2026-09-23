@@ -151,7 +151,23 @@ Every completed scan records:
 
 Latest results, scan history, cache, and request usage are persisted locally as JSON. They are excluded from Git because they may contain runtime wallet evidence and usage metadata.
 
-## 9. Interpretation limits
+## 9. Longitudinal Market Snapshot Campaign
+
+The normal scan optimizes for deep evidence and spends approximately 90 conservative credits per token. The Market Snapshot Campaign instead optimizes for cross-token breadth while retaining the same 200-credit ceiling.
+
+A 200-credit campaign cycle allocates up to 20 lowest-cost calls:
+
+1. One Token Screener snapshot.
+2. BUY and SELL wallet evidence for up to nine discovered tokens.
+3. Any remaining call slots add Flow Intelligence or Flows context.
+4. The rotation engine compares every token with complete BUY and SELL evidence.
+5. The timestamped cycle and any real edges are persisted locally.
+
+Cycles are separated by at least the configured 15-minute cache window. This makes repeated calls distinct market observations rather than immediate duplicate traffic. A call-target guard wraps the live request tracker, so HTTP retries cannot push cumulative usage past 1,000.
+
+The campaign does not run automatically. The user explicitly starts every bounded cycle and can select any limit from 10 through 200 credits.
+
+## 10. Interpretation limits
 
 - Wallet overlap does not prove proceeds from one sale funded the other purchase.
 - Nansen labels and endpoint coverage define the observable universe.

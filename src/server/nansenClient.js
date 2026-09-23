@@ -85,6 +85,8 @@ export function createNansenClient({
         status: response.status,
         requestId: response.headers.get("x-request-id"),
         creditsCost: response.headers.get("x-nansen-credits-cost"),
+        creditsUsed: response.headers.get("x-nansen-credits-used"),
+        creditsRemaining: response.headers.get("x-nansen-credits-remaining"),
         rateLimitSecond: response.headers.get("x-ratelimit-limit-second"),
         rateLimitMinute: response.headers.get("x-ratelimit-limit-minute"),
       },

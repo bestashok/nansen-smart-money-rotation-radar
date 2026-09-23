@@ -6,7 +6,7 @@ title Nansen Smart Money Rotation Radar Launcher
 where node >nul 2>nul || goto :missing_node
 where npm >nul 2>nul || goto :missing_node
 
-powershell -NoProfile -Command "try { $r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:5173; if($r.StatusCode -eq 200){exit 0}else{exit 1} } catch { exit 1 }" >nul 2>nul
+powershell -NoProfile -Command "try { $web=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:5173; $api=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:3000/api/health; if($web.StatusCode -eq 200 -and $api.StatusCode -eq 200){exit 0}else{exit 1} } catch { exit 1 }" >nul 2>nul
 if not errorlevel 1 (
   start "" http://127.0.0.1:5173
   exit /b 0
@@ -17,11 +17,26 @@ if not exist "node_modules\" (
   call npm install || goto :install_failed
 )
 
+powershell -NoProfile -Command "try { $r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:5173; if($r.StatusCode -eq 200){exit 0}else{exit 1} } catch { exit 1 }" >nul 2>nul
+if not errorlevel 1 (
+  echo Starting Nansen Radar API...
+  start "Nansen Radar API" /D "%~dp0" cmd /k "npm run dev:server"
+  goto :wait_ready
+)
+
+powershell -NoProfile -Command "try { $r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:3000/api/health; if($r.StatusCode -eq 200){exit 0}else{exit 1} } catch { exit 1 }" >nul 2>nul
+if not errorlevel 1 (
+  echo Starting Nansen Radar dashboard...
+  start "Nansen Radar Web" /D "%~dp0" cmd /k "npm run dev:client"
+  goto :wait_ready
+)
+
 echo Starting Nansen Smart Money Rotation Radar...
 start "Nansen Radar Servers" /D "%~dp0" cmd /k "npm run dev"
 
+:wait_ready
 for /L %%I in (1,1,60) do (
-  powershell -NoProfile -Command "try { $r=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:5173; if($r.StatusCode -eq 200){exit 0}else{exit 1} } catch { exit 1 }" >nul 2>nul
+  powershell -NoProfile -Command "try { $web=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:5173; $api=Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:3000/api/health; if($web.StatusCode -eq 200 -and $api.StatusCode -eq 200){exit 0}else{exit 1} } catch { exit 1 }" >nul 2>nul
   if not errorlevel 1 goto :ready
   timeout /t 1 /nobreak >nul
 )

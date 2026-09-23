@@ -133,7 +133,7 @@ The project intentionally never emits BUY or SELL recommendations.
 
 ## 7. Credit accounting
 
-The dashboard fixes both scan modes at 200 credits, which is also the absolute server-side maximum. Before each live call, the budget wrapper reserves a conservative endpoint cost. A request is refused before transmission if it could exceed the cap.
+The dashboard accepts 10–200 credits, defaults to 200, and keeps 200 as the absolute server-side maximum. Before each live call, the budget wrapper reserves a conservative endpoint cost. A request is refused before transmission if it could exceed the selected cap.
 
 Retries are real requests, so every retry is separately reserved and logged. Cache hits bypass the live client, consume no reserved credits, and do not increment genuine API usage.
 
@@ -165,7 +165,7 @@ A 200-credit campaign cycle allocates up to 20 lowest-cost calls:
 
 Cycles are separated by at least the configured 15-minute cache window. This makes repeated calls distinct market observations rather than immediate duplicate traffic. A call-target guard wraps the live request tracker, so HTTP retries cannot push cumulative usage past 1,000.
 
-The campaign does not run automatically. The user explicitly starts every cycle, and every cycle uses the fixed 200-credit hard cap.
+The campaign does not run automatically. The user explicitly starts every cycle and can select a hard cap from 10 through 200 credits.
 
 ## 10. Interpretation limits
 

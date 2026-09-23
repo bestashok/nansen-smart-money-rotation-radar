@@ -17,7 +17,7 @@ Optional second clip: show the **Live Scan 2 Campaign** progress bar, explain th
 ## Recording rules
 
 - Keep the full dashboard visible and do not edit the displayed evidence.
-- State clearly when a token is skipped because of the fixed 200-credit budget.
+- State clearly when a token is skipped because of the selected credit budget.
 - A zero-rotation result is valid; never imply an edge that the scan did not observe.
 - Show the 200-credit hard cap before clicking **Run Live Scan**.
 - End on the token evidence panel or the strongest real rotation edge.

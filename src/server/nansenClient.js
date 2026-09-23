@@ -8,7 +8,16 @@ export class NansenApiError extends Error {
     this.status = details.status ?? null;
     this.response = details.response ?? null;
     this.category = details.category ?? "unknown";
+    this.retryAfterMs = details.retryAfterMs ?? null;
   }
+}
+
+function parseRetryAfter(value) {
+  if (!value) return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1_000);
+  const date = Date.parse(value);
+  return Number.isFinite(date) ? Math.max(0, date - Date.now()) : null;
 }
 
 function classifyFailure(status, response) {
@@ -75,6 +84,7 @@ export function createNansenClient({
         status: response.status,
         response: parsedBody,
         category: classifyFailure(response.status, parsedBody),
+        retryAfterMs: parseRetryAfter(response.headers.get("retry-after")),
       });
     }
 

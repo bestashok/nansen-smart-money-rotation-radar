@@ -21,7 +21,7 @@ For development, run `npm install` and `npm run dev`.
 - `GET /api/usage`
 - `GET /api/history`
 
-Runtime scan output and API usage are stored under `data/` and excluded from Git. The API key remains server-side and `.env` is ignored.
+Runtime scan output, a 15-minute Nansen response cache, and API usage are stored under `data/` and excluded from Git. Cache hits do not consume the live-call counter. HTTP 429 responses use bounded retries with `Retry-After` support. The API key remains server-side and `.env` is ignored.
 
 ## Evidence and scoring
 
@@ -29,4 +29,4 @@ Discovery requests up to 25 qualifying tokens; fewer tokens and zero tokens are 
 
 ## Verification
 
-Run `npm test` and `npm run build`. The dedicated `npm run gate:rotation` command has a conservative Free-plan budget guard and refuses to exceed 100 credits; its verified run reserved 90 credits and researched four real tokens.
+Run `npm test` and `npm run build`. The dashboard scan has a hard 200-credit ceiling and currently selects at most two discovered tokens, reserving no more than 190 credits without cache hits or retries. Every retry is separately budgeted, so the cap cannot be exceeded. The dedicated `npm run gate:rotation` command has a conservative Free-plan budget guard and refuses to exceed 100 credits; its verified run reserved 90 credits and researched four real tokens.

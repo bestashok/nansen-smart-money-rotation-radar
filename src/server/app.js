@@ -4,6 +4,8 @@ import { scanAllTokens } from "./scanner.js";
 import { readHistory, readLatest, saveScan } from "./dataStore.js";
 import { readUsage, trackNansenUsage } from "./apiUsage.js";
 import { withCreditBudget } from "./creditBudget.js";
+import { createCachedNansenClient } from "./cache.js";
+import { withRateLimitRetries } from "./retry.js";
 
 export function createApp() {
   const app = express();
@@ -27,12 +29,14 @@ export function createApp() {
     status.message = "Discovering qualifying tokens with Nansen.";
     const tracked = trackNansenUsage(createNansenClient());
     const budgeted = withCreditBudget(tracked, 200);
-    scanAllTokens(budgeted, { maxTokens: 2, concurrency: 2 })
+    const retried = withRateLimitRetries(budgeted);
+    const cached = createCachedNansenClient(retried);
+    scanAllTokens(cached, { maxTokens: 2, concurrency: 2 })
       .then(async (result) => {
         const averageApiLatencyMs = tracked.current.latencies.length
           ? tracked.current.latencies.reduce((sum, value) => sum + value, 0) / tracked.current.latencies.length
           : 0;
-        Object.assign(result, { liveApiCalls: tracked.current.calls, cacheHits: 0, averageApiLatencyMs, rateLimitEvents: tracked.current.rateLimitEvents, creditBudget: budgeted.usage() });
+        Object.assign(result, { liveApiCalls: tracked.current.calls, cacheHits: cached.current.hits, averageApiLatencyMs, rateLimitEvents: tracked.current.rateLimitEvents, creditBudget: budgeted.usage() });
         await saveScan(result);
         Object.assign(status, { running: false, phase: "SCAN_COMPLETE", message: `Scan complete — ${result.tokensDiscovered} qualifying tokens found.` });
       })

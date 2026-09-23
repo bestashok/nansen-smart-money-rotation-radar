@@ -32,7 +32,7 @@
 - Wallet overlap logic was verified against real evidence and synthetic unit boundaries without fabricating a positive rotation.
 - A strict 100-credit gate refused requests beyond its allowance.
 - The dashboard scan enforces an absolute 200-credit maximum.
-- Market Snapshot Campaign broadens BUY/SELL evidence to as many as nine tokens per 200-credit cycle.
+- Live Scan 2 Campaign broadens BUY/SELL evidence to as many as nine tokens per 200-credit cycle.
 - Concurrent usage persistence is serialized so campaign calls cannot be lost from the cumulative counter.
 - Current release: 32 automated tests passing and production build passing.
 

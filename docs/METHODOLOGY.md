@@ -133,7 +133,7 @@ The project intentionally never emits BUY or SELL recommendations.
 
 ## 7. Credit accounting
 
-The dashboard accepts 10–200 credits, with 200 as an absolute server-side maximum. Before each live call, the budget wrapper reserves a conservative endpoint cost. A request is refused before transmission if it could exceed the cap.
+The dashboard fixes both scan modes at 200 credits, which is also the absolute server-side maximum. Before each live call, the budget wrapper reserves a conservative endpoint cost. A request is refused before transmission if it could exceed the cap.
 
 Retries are real requests, so every retry is separately reserved and logged. Cache hits bypass the live client, consume no reserved credits, and do not increment genuine API usage.
 
@@ -151,9 +151,9 @@ Every completed scan records:
 
 Latest results, scan history, cache, and request usage are persisted locally as JSON. They are excluded from Git because they may contain runtime wallet evidence and usage metadata.
 
-## 9. Longitudinal Market Snapshot Campaign
+## 9. Longitudinal Live Scan 2 Campaign
 
-The normal scan optimizes for deep evidence and spends approximately 90 conservative credits per token. The Market Snapshot Campaign instead optimizes for cross-token breadth while retaining the same 200-credit ceiling.
+The normal scan optimizes for deep evidence and reserves approximately 90 conservative credits per token. The Live Scan 2 Campaign instead optimizes for cross-token breadth while retaining the same fixed 200-credit ceiling.
 
 A 200-credit campaign cycle allocates up to 20 lowest-cost calls:
 
@@ -165,7 +165,7 @@ A 200-credit campaign cycle allocates up to 20 lowest-cost calls:
 
 Cycles are separated by at least the configured 15-minute cache window. This makes repeated calls distinct market observations rather than immediate duplicate traffic. A call-target guard wraps the live request tracker, so HTTP retries cannot push cumulative usage past 1,000.
 
-The campaign does not run automatically. The user explicitly starts every bounded cycle and can select any limit from 10 through 200 credits.
+The campaign does not run automatically. The user explicitly starts every cycle, and every cycle uses the fixed 200-credit hard cap.
 
 ## 10. Interpretation limits
 

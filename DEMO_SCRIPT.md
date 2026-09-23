@@ -12,12 +12,12 @@ Recorded example: [demo/nansen-rotation-radar-demo.mp4](demo/nansen-rotation-rad
 
 Say: “Rotations are inferred from the same Smart Money wallets selling one token and buying another; the app does not claim direct fund transfers.”
 
-Optional second clip: show the **Market Snapshot Campaign** progress bar, explain that each cycle keeps the 200-credit maximum, and show the latest broad wallet-overlap result. Do not click it again until the displayed cooldown expires.
+Optional second clip: show the **Live Scan 2 Campaign** progress bar, explain that each cycle keeps the fixed 200-credit maximum, and show the latest broad wallet-overlap result. Do not click it again until the displayed cooldown expires.
 
 ## Recording rules
 
 - Keep the full dashboard visible and do not edit the displayed evidence.
-- State clearly when a token is skipped because of the selected budget.
+- State clearly when a token is skipped because of the fixed 200-credit budget.
 - A zero-rotation result is valid; never imply an edge that the scan did not observe.
 - Show the 200-credit hard cap before clicking **Run Live Scan**.
 - End on the token evidence panel or the strongest real rotation edge.

@@ -13,10 +13,10 @@ It does **not** claim that funds moved directly from Token A to Token B. A rotat
 Normal use is intentionally simple:
 
 ```text
-Double-click Start Radar.bat → browser opens → choose 10–200 credits → Run Live Scan
+Double-click Start Radar.bat → browser opens → fixed 200-credit hard cap → Run Live Scan
 ```
 
-The dashboard also includes a separate **Market Snapshot Campaign** for the [buildathon's 1,000-call requirement](https://nansen.ai/campaigns/meridian-buildathon#submit). It keeps the same 200-credit maximum, broadens wallet research to as many as nine tokens per cycle, records real cross-token overlaps, and enforces a 15-minute cooldown between snapshots.
+The dashboard also includes a separate **Live Scan 2 Campaign** for the [buildathon's 1,000-call requirement](https://nansen.ai/campaigns/meridian-buildathon#submit). It uses the same fixed 200-credit maximum, broadens wallet research to as many as nine tokens per cycle, records real cross-token overlaps, and enforces a 15-minute cooldown between runs.
 
 ## What the project answers
 
@@ -106,7 +106,7 @@ The complete methodology and formulas are documented in [METHODOLOGY.md](docs/ME
 
 ## Credit safety and pagination
 
-The dashboard accepts a whole-number budget from **10 through 200 credits**. The backend validates the number and enforces the cap before every live request; changing the browser cannot bypass it.
+The dashboard locks both scan modes to a **200-credit hard cap**. The backend independently validates the submitted budget and enforces the cap before every live request; changing the browser cannot bypass it.
 
 The application uses deliberately conservative accounting:
 
@@ -128,7 +128,7 @@ Examples:
 
 The scanner starts a research batch only when the conservative budget can fund complete 90-credit token research. HTTP 429 retries are separately budgeted, bounded, and respect `Retry-After`. The hard cap is never exceeded.
 
-## 1,000-call Market Snapshot Campaign
+## 1,000-call Live Scan 2 Campaign
 
 The buildathon campaign mode is meaningful research—not an API-call generator. With a 200-credit cap, one uncached cycle performs up to 20 calls:
 
@@ -180,7 +180,7 @@ If no wallet overlap exists, the rotation map shows a truthful zero-rotation sta
 2. Copy `.env.example` to `.env`.
 3. Add your key: `NANSEN_API_KEY=your_key_here`.
 4. Double-click `Start Radar.bat`.
-5. Choose a credit cap and click **Run Live Scan**.
+5. Click **Run Live Scan**; the 200-credit hard cap is already fixed.
 
 The launcher checks Node/npm, installs dependencies when missing, starts both servers, waits for readiness, and opens `http://127.0.0.1:5173` automatically. It avoids launching duplicate project servers.
 
@@ -202,7 +202,7 @@ npm run dev
 | GET | `/api/rotations` | Latest rotation edges |
 | GET | `/api/usage` | Genuine Nansen call history |
 | GET | `/api/history` | Summarized scan history |
-| POST | `/api/campaign` | Run one credit-capped market snapshot cycle |
+| POST | `/api/campaign` | Run one credit-capped Live Scan 2 campaign cycle |
 | GET | `/api/campaign` | Read 1,000-call progress, cooldown and latest campaign evidence |
 
 ## Reliability and privacy

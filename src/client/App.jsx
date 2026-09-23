@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+const CREDIT_LIMIT = 200;
 
 function shortAddress(address = "") { return address.length > 14 ? `${address.slice(0, 7)}…${address.slice(-5)}` : address; }
 
@@ -74,7 +75,6 @@ export default function App() {
   const [usage, setUsage] = useState({ cumulativeRealNansenApiCalls: 0 });
   const [campaign, setCampaign] = useState({ targetApiCalls: 1000, cumulativeRealNansenApiCalls: 0, callsRemaining: 1000, completedRuns: 0, latest: null, canRun: true });
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const [creditLimit, setCreditLimit] = useState("200");
   const [scanError, setScanError] = useState("");
   const selected = useMemo(() => results?.tokens?.find((item) => item.token.contractAddress === selectedAddress) ?? results?.tokens?.[0], [results, selectedAddress]);
   const tableRows = useMemo(() => {
@@ -99,7 +99,7 @@ export default function App() {
     const response = await fetch("/api/scan", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ creditLimit: Number(creditLimit) }),
+      body: JSON.stringify({ creditLimit: CREDIT_LIMIT }),
     });
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
@@ -114,20 +114,20 @@ export default function App() {
     const response = await fetch("/api/campaign", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ creditLimit: Number(creditLimit) }),
+      body: JSON.stringify({ creditLimit: CREDIT_LIMIT }),
     });
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
-      setScanError(body.error ?? "The market snapshot could not be started.");
+      setScanError(body.error ?? "Live Scan 2 could not be started.");
       return;
     }
     await refresh();
   }
 
   return <main>
-    <header><div><p className="eyebrow">NANSEN · MULTI-CHAIN INTELLIGENCE</p><h1>SMART MONEY<br /><em>ROTATION RADAR</em></h1><p className="subtitle">See where Smart Money appears to be rotating before the crowd.</p></div><div className="scan-controls"><label>Maximum Nansen credits<input type="number" min="10" max="200" step="10" value={creditLimit} disabled={status.running} onChange={(event) => setCreditLimit(event.target.value)} /></label><small>Maximum 200 · no token-count limit · approximately 90 credits per fully researched token</small><button disabled={status.running || !Number.isSafeInteger(Number(creditLimit)) || Number(creditLimit) < 10 || Number(creditLimit) > 200} onClick={runScan}>{status.running ? "SCAN IN PROGRESS" : "RUN LIVE SCAN"}</button></div></header>
+    <header><div><p className="eyebrow">NANSEN · MULTI-CHAIN INTELLIGENCE</p><h1>SMART MONEY<br /><em>ROTATION RADAR</em></h1><p className="subtitle">See where Smart Money appears to be rotating before the crowd.</p></div><div className="scan-controls"><label>Fixed Nansen credit cap<input type="number" value={CREDIT_LIMIT} disabled /></label><small>Hard cap 200 · no token-count limit · approximately 90 conservatively reserved credits per fully researched token</small><button disabled={status.running} onClick={runScan}>{status.running ? "SCAN IN PROGRESS" : "RUN LIVE SCAN"}</button></div></header>
 
-    <section className={`status ${status.phase === "FAILED" || scanError ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")} · HARD CAP {status.creditLimit ?? creditLimit} CREDITS</label><strong>{scanError || status.message}</strong></div></section>
+    <section className={`status ${status.phase === "FAILED" || scanError ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")} · HARD CAP {status.creditLimit ?? CREDIT_LIMIT} CREDITS</label><strong>{scanError || status.message}</strong></div></section>
 
     <section className="metrics">
       <article><label>Qualifying tokens</label><strong>{results?.tokensDiscovered ?? "—"}</strong></article>
@@ -139,8 +139,8 @@ export default function App() {
       <article><label>Total time</label><strong>{results ? `${(results.totalDurationMs / 1000).toFixed(1)}s` : "—"}</strong></article>
     </section>
 
-    <section className="panel campaign-panel"><div className="panel-title"><div><p>MARKET SNAPSHOT CAMPAIGN</p><h2>Broader wallet coverage · 1,000 genuine-call target</h2></div><span>{campaign.completedRuns} completed cycles</span></div>
-      <div className="campaign-layout"><div><div className="campaign-count"><strong>{campaign.cumulativeRealNansenApiCalls ?? 0}</strong><span>/ {campaign.targetApiCalls ?? 1000} REAL CALLS</span></div><div className="progress"><i style={{ width: `${Math.min(100, ((campaign.cumulativeRealNansenApiCalls ?? 0) / (campaign.targetApiCalls || 1000)) * 100)}%` }} /></div><p>Each cycle uses the selected hard cap to collect BUY/SELL wallet evidence across a broader token set, then tests genuine cross-token overlap. A 15-minute cooldown prevents duplicate snapshots.</p></div><div className="campaign-action"><button className="secondary" disabled={status.running || !campaign.canRun || Number(creditLimit) < 10 || Number(creditLimit) > 200} onClick={runCampaign}>{campaign.callsRemaining === 0 ? "TARGET COMPLETE" : "RUN MARKET SNAPSHOT"}</button><small>{campaign.callsRemaining ?? 1000} calls remaining{!campaign.canRun && campaign.callsRemaining > 0 && campaign.nextEligibleAt ? ` · next cycle ${new Date(campaign.nextEligibleAt).toLocaleTimeString()}` : ""}</small></div></div>
+    <section className="panel campaign-panel"><div className="panel-title"><div><p>LIVE SCAN 2 CAMPAIGN</p><h2>Broader wallet coverage · 1,000 genuine-call target</h2></div><span>{campaign.completedRuns} completed cycles</span></div>
+      <div className="campaign-layout"><div><div className="campaign-count"><strong>{campaign.cumulativeRealNansenApiCalls ?? 0}</strong><span>/ {campaign.targetApiCalls ?? 1000} REAL CALLS</span></div><div className="progress"><i style={{ width: `${Math.min(100, ((campaign.cumulativeRealNansenApiCalls ?? 0) / (campaign.targetApiCalls || 1000)) * 100)}%` }} /></div><p>Each Live Scan 2 cycle uses the fixed 200-credit hard cap to collect BUY/SELL wallet evidence across a broader token set, then tests genuine cross-token overlap. A 15-minute cooldown prevents duplicate runs.</p></div><div className="campaign-action"><button className="secondary" disabled={status.running || !campaign.canRun} onClick={runCampaign}>{campaign.callsRemaining === 0 ? "TARGET COMPLETE" : "RUN LIVE SCAN 2"}</button><small>{campaign.callsRemaining ?? 1000} calls remaining{!campaign.canRun && campaign.callsRemaining > 0 && campaign.nextEligibleAt ? ` · next cycle ${new Date(campaign.nextEligibleAt).toLocaleTimeString()}` : ""}</small></div></div>
       {campaign.latest && <div className="campaign-latest"><span>Latest: {campaign.latest.tokensPairedForResearch} tokens with BUY/SELL pairs · {campaign.latest.liveApiCalls} live calls · {campaign.latest.creditBudget?.reservedCredits ?? 0}/{campaign.latest.creditBudget?.limit ?? 200} credits reserved</span><RotationMap rotations={campaign.latest.rotations} /></div>}
     </section>
 

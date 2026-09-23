@@ -128,26 +128,18 @@ function normalizeFlowIntelligence(record) {
   };
 }
 
-export async function runResearchGate(nansenClient, { now = new Date() } = {}) {
-  const discovery = await discoverTokens(nansenClient);
-  const token = discovery.tokens[0];
-  if (!token) {
-    return { passed: false, reason: "No qualifying token was available for research.", discovery };
-  }
-
+export async function researchToken(nansenClient, token, { now = new Date() } = {}) {
   const requests = createResearchRequests(token, now);
   const startedAt = performance.now();
   const names = Object.keys(RESEARCH_ENDPOINTS);
-  const settled = await Promise.allSettled(
-    names.map((name) => nansenClient.post(RESEARCH_ENDPOINTS[name], requests[name])),
-  );
-
   const failures = {};
   const results = {};
-  for (const [index, outcome] of settled.entries()) {
-    const name = names[index];
-    if (outcome.status === "rejected") failures[name] = outcome.reason;
-    else results[name] = outcome.value;
+  for (const name of names) {
+    try {
+      results[name] = await nansenClient.post(RESEARCH_ENDPOINTS[name], requests[name]);
+    } catch (error) {
+      failures[name] = error;
+    }
   }
 
   if (Object.keys(failures).length > 0) {
@@ -189,4 +181,14 @@ export async function runResearchGate(nansenClient, { now = new Date() } = {}) {
     },
     api: Object.fromEntries(names.map((name) => [name, results[name].meta])),
   };
+}
+
+export async function runResearchGate(nansenClient, { now = new Date() } = {}) {
+  const discovery = await discoverTokens(nansenClient);
+  const token = discovery.tokens[0];
+  if (!token) {
+    return { passed: false, reason: "No qualifying token was available for research.", discovery };
+  }
+
+  return researchToken(nansenClient, token, { now });
 }

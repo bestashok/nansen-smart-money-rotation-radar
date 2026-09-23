@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --watch src/server/index.js",
     "start": "node src/server/index.js",
+    "gate:discovery": "node src/server/runDiscoveryGate.js",
     "test": "node --test"
   },
   "dependencies": {

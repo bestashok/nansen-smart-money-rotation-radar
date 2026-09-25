@@ -7,7 +7,7 @@ import { withCreditBudget, CAMPAIGN_CREDIT_COSTS } from "./creditBudget.js";
 import { createCachedNansenClient } from "./cache.js";
 import { withRateLimitRetries } from "./retry.js";
 import { API_CALL_LIMIT, API_CALL_TARGET, CREDIT_SAFETY_RESERVE, runEligibilityCampaign } from "./eligibilityCampaign.js";
-import { campaignCallsRemaining, campaignCallsSent, readCampaignHistory, saveCampaignRun } from "./campaignStore.js";
+import { campaignCallAccounting, campaignCallsRemaining, campaignCallsSent, readCampaignHistory, saveCampaignRun } from "./campaignStore.js";
 import { appendUsage, defaultUsagePath } from "./apiUsage.js";
 import { withCallBudget } from "./callBudget.js";
 import { withCumulativeCap } from "./callBudget.js";
@@ -437,7 +437,14 @@ export function createApp() {
     const cumulative = ledgerKnown ? usage.cumulativeRealNansenApiCalls : null;
     const cumulativeRemaining = ledgerKnown ? Math.max(0, API_CALL_TARGET - cumulative) : 0;
     const effectiveRemaining = ledgerKnown ? Math.min(remaining, cumulativeRemaining) : 0;
-    const otherCalls = ledgerKnown ? Math.max(0, cumulative - sent) : null;
+    // Split the all-time total three ways, because "other" is really two
+    // different things. `outsideRuns` is genuine calls from plain Run Live
+    // Scan; `unrecorded` is campaign-cycle calls the legacy ledger failed to
+    // record (3 runs stored no totals, 2 runs dropped increments to a write
+    // race). Lumping them together as "other live scans" mislabels the second
+    // group, which really is campaign work.
+    const accounting = campaignCallAccounting(history);
+    const otherCalls = ledgerKnown ? Math.max(0, cumulative - accounting.actual) : null;
     const lastStartedAt = Date.parse(history[0]?.campaignStartedAt ?? "");
     const nextEligibleAt = Number.isFinite(lastStartedAt)
       ? new Date(lastStartedAt + campaignCooldownMs()).toISOString()
@@ -446,6 +453,8 @@ export function createApp() {
       targetApiCalls: API_CALL_LIMIT,
       allTimeTargetApiCalls: API_CALL_TARGET,
       campaignCallsSent: sent,
+      campaignCallsActual: accounting.actual,
+      campaignCallsUnrecorded: accounting.unrecorded,
       otherApiCalls: otherCalls,
       allTimeApiCalls: cumulative,
       allTimeCallsRemaining: cumulativeRemaining,

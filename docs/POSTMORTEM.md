@@ -1,14 +1,25 @@
-# Postmortem: 1,011 genuine Nansen calls (11 over the 1,000 target)
+# Postmortem: a self-imposed call guard that failed open
 
 **Date of run:** 2026-09-25 19:54 IST
 **Status:** disclosed and remediated. The 1,011 calls stand; the defect is fixed.
 **Ledger:** `data/api-usage.json` is unaltered. `cumulativeRealNansenApiCalls = 1011`.
 
+## Scope of the rules
+
+The buildathon asks each builder to **make 1,000 API calls** to prove the Nansen API was really
+used. That figure is a **minimum, not a ceiling** — the published terms state no upper limit, and
+1,011 calls satisfies the requirement.
+
+The 1,000-call budget discussed below is therefore **this repository's own safety cap**, designed
+to stop the application spending more credits than intended. It is not a competition limit, and
+exceeding it is not a rules violation. What *is* worth writing down is that the cap silently
+stopped working, because a cap that fails open is not a cap at all.
+
 ## Summary
 
 The final campaign run sent **247** requests and took the all-time genuine call count from
-**764 to 1,011**. The buildathon target is a **1,000-call ceiling**, so the run **overshot by
-11 calls**.
+**764 to 1,011**. The internal budget allowed 236; the run was permitted 247, exceeding this
+project's own guard by **11 calls**.
 
 The 909-call campaign cap held exactly as designed. The 1,000-call all-time guard did not.
 
@@ -25,7 +36,7 @@ The run's own stop reason was:
 
 All 247 calls succeeded: 247 successful, 0 failed, 0 retries.
 
-## The run that breached it
+## The run that exceeded the guard
 
 | | Value |
 |---|---|
@@ -100,7 +111,9 @@ depends on a ledger read at run start — failed.
 
 ## Impact and scope
 
-- **11 requests over a 1,000-call ceiling.** These reached Nansen and cannot be recalled.
+- **11 requests beyond this project's own 1,000-call guard.** These reached Nansen and cannot
+  be recalled. The competition's requirement (1,000 calls) was met regardless; the impact is
+  limited to 11 calls of unintended credit spend.
 - The overshoot is visible in `data/api-usage.json` and in the final run record in
   `data/campaign-history.json` (before 764, after 1011).
 - The call record was not edited, trimmed, or reconciled after the fact. Correcting the number

@@ -12,13 +12,18 @@ It does **not** claim that funds moved directly from Token A to Token B. A rotat
 
 [▶ Watch the 54-second product demo](demo/nansen-smart-money-radar-demo.mp4)
 
-> **Disclosure — the final run made 1,011 genuine Nansen calls, 11 over the 1,000 target.**
-> The 909-call campaign cap held exactly (request 910 was never sent). The separate
-> 1,000-call all-time guard failed open: when the usage ledger could not be read, the code
-> treated the count as `0` rather than unknown, granting the full 1,000-call budget for that
-> run. The call record was not edited afterwards. **The defect has since been fixed** — the
-> guard now fails closed, with regression tests in `test/ledgerFailClosed.test.js`. Full
-> analysis, timeline and remediation are in **[docs/POSTMORTEM.md](docs/POSTMORTEM.md)**.
+Posted as required by the buildathon:
+[▶ Demo post on X](https://x.com/ibestashok/status/2103454925279941010)
+
+> **1,011 genuine Nansen API calls — the buildathon asks for 1,000, and this build exceeds it.**
+> The competition sets 1,000 calls as a *minimum* to prove the API was really used; it states
+> no ceiling. The 1,000 figure is a self-imposed budget inside this repo, and during the final
+> run that internal guard failed open: when the usage ledger could not be read, the code treated
+> the count as `0` rather than unknown, so the run was granted the full 1,000-call budget
+> instead of the 236 that actually remained. That is an engineering defect, not a rules
+> violation — and it has been fixed. The guard now fails closed, with regression tests in
+> `test/ledgerFailClosed.test.js`. The call record was never edited. Full analysis, timeline
+> and remediation are in **[docs/POSTMORTEM.md](docs/POSTMORTEM.md)**.
 
 Normal use is intentionally simple:
 

@@ -34,7 +34,7 @@
 - The dashboard scan enforces an absolute 200-credit maximum.
 - Live Scan 2 Campaign sends up to 909 genuine, distinct Nansen calls per run; a send-site guard makes request 910 impossible, and retries count against the same budget.
 - Concurrent usage persistence is serialized so campaign calls cannot be lost from the cumulative counter.
-- Current release: 50 automated tests passing, plus a local fake-Nansen dry run (`npm run dry:campaign`) that hits exactly 909/909 and never 910, and a production build passing.
+- Current release: 71 automated tests passing, plus a local fake-Nansen dry run (`npm run dry:campaign`) that hits exactly 909/909 and never 910, and a production build passing.
 
 ## Honest-result policy
 
@@ -42,4 +42,6 @@ The best demo result is not necessarily a positive rotation. If the selected tok
 
 ## Public versus local data
 
-The source repository is public. The user's Nansen API key, runtime cache, wallet evidence, scan history, latest results, and cumulative usage remain local and are ignored by Git. Anyone reviewing or cloning the project must supply their own Nansen key to run a fresh scan.
+The source repository is public. The user's Nansen API key, runtime cache, wallet evidence, scan history, latest results, and the full cumulative usage ledger remain local and are ignored by Git. Anyone reviewing or cloning the project must supply their own Nansen key to run a fresh scan.
+
+A committed, key-free summary of genuine API usage is included at [`data/usage-summary.json`](../data/usage-summary.json) so the 1,000-call requirement can be verified without the local ledger.

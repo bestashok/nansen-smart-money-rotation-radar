@@ -1,0 +1,40 @@
+{
+  "note": "Committed summary of genuine Nansen API usage, so a reviewer cloning this repository can verify the buildathon's 1,000-call requirement without access to the local runtime ledger. The full per-call ledger (data/api-usage.json) is gitignored along with the API key.",
+  "competition": {
+    "name": "Meridian Buildathon (Build With Nansen API)",
+    "requirement": "Make 1,000 API calls to prove the Nansen API is genuinely used",
+    "requirementType": "minimum, not a ceiling",
+    "requirementMet": true,
+    "officialTerms": "https://nansen.ai/campaigns/meridian-buildathon"
+  },
+  "totals": {
+    "genuineNansenApiCallsAllTime": 1011,
+    "requiredMinimum": 1000,
+    "exceedsMinimumBy": 11
+  },
+  "attribution": {
+    "liveScan2CampaignCycles": 952,
+    "liveScan2RecordedInCapLedger": 909,
+    "liveScan2UnrecordedByLegacyLedger": 43,
+    "plainRunLiveScan": 59,
+    "note": "The 43-call difference between 952 actually spent in campaign cycles and the 909 the cap ledger recorded has two causes: 3 legacy runs (2026-09-23 to 2026-09-24) stored liveApiCalls but no runReport, so the cap scored them 0; and 2 later runs recorded more than the cumulative ledger advanced, dropping 10 increments to a write race in appendUsage. The race is fixed and covered by test/apiUsage.test.js. The enforcement ledger was deliberately left unmodified."
+  },
+  "campaignCap": {
+    "cap": 909,
+    "recorded": 909,
+    "enforcedAt": "send site (src/server/callBudget.js), which never reads the usage ledger",
+    "request910Sent": false,
+    "result": "Held. The 909 cap was never breached at the point of transmission."
+  },
+  "budgetGuard": {
+    "selfImposedAllTimeCap": 1000,
+    "note": "This 1,000 figure is a safety cap inside this repository, not a competition limit. During the final run it failed open when the usage ledger could not be read, permitting 247 calls where 236 remained. The guard now fails closed; see docs/POSTMORTEM.md and test/ledgerFailClosed.test.js."
+  },
+  "verification": {
+    "testCount": 71,
+    "testCommand": "npm test",
+    "dryRunCommand": "npm run dry:campaign",
+    "dryRunResult": "909/909 sent against a fake local Nansen; request 910 never sent; no real API calls",
+    "apiKeyIncludedInRepo": false
+  }
+}

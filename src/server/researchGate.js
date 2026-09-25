@@ -8,7 +8,7 @@ export const RESEARCH_ENDPOINTS = Object.freeze({
   holders: "/api/v1/tgm/holders",
 });
 
-const SMART_MONEY_LABELS = Object.freeze([
+export const SMART_MONEY_LABELS = Object.freeze([
   "Fund",
   "Smart Trader",
   "30D Smart Trader",
@@ -16,9 +16,9 @@ const SMART_MONEY_LABELS = Object.freeze([
   "180D Smart Trader",
 ]);
 
-function dateRange(now = new Date()) {
+export function dateRange(now = new Date(), days = 7) {
   return {
-    from: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1_000).toISOString(),
+    from: new Date(now.getTime() - days * 24 * 60 * 60 * 1_000).toISOString(),
     to: now.toISOString(),
   };
 }

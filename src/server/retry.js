@@ -10,8 +10,13 @@ export function withRateLimitRetries(client, {
 } = {}) {
   const retryLimit = positiveInteger(maxRetries, 3);
   const baseDelay = positiveInteger(baseDelayMs, 500);
+  const current = { retries: 0 };
 
   return {
+    current,
+    stats() {
+      return { ...current };
+    },
     async post(endpoint, body) {
       let retries = 0;
       while (true) {
@@ -23,6 +28,7 @@ export function withRateLimitRetries(client, {
             ? Math.max(0, error.retryAfterMs)
             : baseDelay * (2 ** retries);
           retries += 1;
+          current.retries += 1;
           await sleep(delay);
         }
       }

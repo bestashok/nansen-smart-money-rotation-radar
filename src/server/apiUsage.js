@@ -1,30 +1,52 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const defaultUsagePath = path.resolve("data/api-usage.json");
+export const defaultUsagePath = path.resolve("data/api-usage.json");
 let usageWriteQueue = Promise.resolve();
 
 async function loadUsage(usagePath) {
-  try { return JSON.parse(await readFile(usagePath, "utf8")); }
-  catch { return { cumulativeRealNansenApiCalls: 0, calls: [] }; }
+  try {
+    return JSON.parse(await readFile(usagePath, "utf8"));
+  } catch {
+    return { cumulativeRealNansenApiCalls: 0, calls: [] };
+  }
 }
 
-async function appendUsage(usagePath, entry) {
-  usageWriteQueue = usageWriteQueue.catch(() => {}).then(async () => {
+// Persist the latest raw balance immediately on every successful live
+// response, so the ledger's latest creditsRemaining is always the Nansen
+// API's most-recent report. A later call that consumed credits overwrites
+// the balance while keeping the raw value (no double-subtraction: the
+// reservation counter is separate from this raw balance field).
+// Serializes every read-modify-write of the usage ledger. The task must be
+// chained off the *current* queue with .then(): an async IIFE here would start
+// immediately and ignore the pending write, letting two callers race on the
+// same api-usage.json.tmp (ENOENT on rename) and drop increments.
+export async function appendUsage(usagePath, entry) {
+  const queued = usageWriteQueue.catch(() => {}).then(async () => {
     const usage = await loadUsage(usagePath);
     usage.cumulativeRealNansenApiCalls += 1;
     usage.calls.push(entry);
+    // Keep only the last 1000 calls to bound file size.
     usage.calls = usage.calls.slice(-1000);
     await mkdir(path.dirname(usagePath), { recursive: true });
     const temporaryPath = `${usagePath}.tmp`;
     await writeFile(temporaryPath, JSON.stringify(usage, null, 2));
     await rename(temporaryPath, usagePath);
   });
-  return usageWriteQueue;
+  usageWriteQueue = queued;
+  return queued;
 }
 
 export function trackNansenUsage(client, { usagePath = defaultUsagePath } = {}) {
-  const current = { calls: 0, attempts: 0, transportFailures: 0, latencies: [], rateLimitEvents: 0 };
+  const current = {
+    calls: 0,
+    attempts: 0,
+    successful: 0,
+    failed: 0,
+    transportFailures: 0,
+    latencies: [],
+    rateLimitEvents: 0,
+  };
   return {
     current,
     async post(endpoint, body) {
@@ -45,12 +67,22 @@ export function trackNansenUsage(client, { usagePath = defaultUsagePath } = {}) 
       } finally {
         const latency = performance.now() - startedAt;
         current.attempts += 1;
+        if (success) current.successful += 1;
+        else current.failed += 1;
         current.latencies.push(latency);
         if (status === null || status === undefined) {
           current.transportFailures += 1;
         } else {
           current.calls += 1;
-          await appendUsage(usagePath, { timestamp: new Date().toISOString(), endpoint, status, latencyMs: latency, success, creditsUsed: meta?.creditsUsed ?? meta?.creditsCost ?? null });
+          await appendUsage(usagePath, {
+            timestamp: new Date().toISOString(),
+            endpoint,
+            status,
+            latencyMs: latency,
+            success,
+            creditsUsed: meta?.creditsUsed ?? meta?.creditsCost ?? null,
+            creditsRemaining: meta?.creditsRemaining ?? null,
+          });
         }
       }
     },

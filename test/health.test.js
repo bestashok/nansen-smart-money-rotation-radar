@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createApp } from "../src/server/app.js";
+import { createApp, lastKnownCredits } from "../src/server/app.js";
+
+test("lastKnownCredits coerces the string header values Nansen returns", () => {
+  assert.equal(lastKnownCredits({ calls: [{ creditsRemaining: "339" }, { creditsRemaining: "344" }] }), 344);
+  assert.equal(lastKnownCredits({ calls: [{ creditsRemaining: 339 }] }), 339);
+  assert.equal(lastKnownCredits({ calls: [{ creditsRemaining: null }, { creditsRemaining: "339" }] }), 339);
+  assert.equal(lastKnownCredits({ calls: [{ creditsRemaining: null }] }), null);
+  assert.equal(lastKnownCredits({ calls: [] }), null);
+});
 
 test("GET /api/health reports a healthy service", async (t) => {
   const server = createApp().listen(0);

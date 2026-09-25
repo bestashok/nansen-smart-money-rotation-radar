@@ -1,6 +1,6 @@
 # 30–60 Second Demo and Recording Guide
 
-Recorded example: [demo/nansen-rotation-radar-demo.mp4](demo/nansen-rotation-radar-demo.mp4)
+Recorded example: [demo/nansen-smart-money-radar-demo.mp4](demo/nansen-smart-money-radar-demo.mp4)
 
 - **0–5s:** Double-click `Start Radar.bat`; the browser opens automatically.
 - **5–10s:** Show the 200-credit hard maximum and explain that lower budgets are allowed, then click **Run Live Scan**.
@@ -12,7 +12,7 @@ Recorded example: [demo/nansen-rotation-radar-demo.mp4](demo/nansen-rotation-rad
 
 Say: “Rotations are inferred from the same Smart Money wallets selling one token and buying another; the app does not claim direct fund transfers.”
 
-Optional second clip: show the **Live Scan 2 Campaign** progress bar, explain that each cycle keeps the fixed 200-credit maximum, and show the latest broad wallet-overlap result. Do not click it again until the displayed cooldown expires.
+Optional second clip: show the **Live Scan 2 Campaign** progress line counting `Nansen API calls: N/909`, explain that one run may send up to 909 genuine calls but request 910 is impossible, and show the latest broad wallet-overlap result. Do not click it again until the displayed cooldown expires.
 
 ## Recording rules
 

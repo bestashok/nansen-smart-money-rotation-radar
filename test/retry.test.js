@@ -31,3 +31,20 @@ test("429 retry count is bounded", async () => {
   await assert.rejects(client.post("/endpoint", {}), /limited/);
   assert.equal(calls, 3);
 });
+
+test("retry wrapper tracks cumulative retries through current and stats()", async () => {
+  let calls = 0;
+  const client = withRateLimitRetries({
+    async post() {
+      calls += 1;
+      if (calls < 3) throw Object.assign(new Error("limited"), { status: 429, retryAfterMs: 0 });
+      return { data: { ok: true }, meta: { status: 200 } };
+    },
+  }, { maxRetries: 3, sleep: async () => {} });
+
+  const result = await client.post("/endpoint", {});
+  assert.equal(result.data.ok, true);
+  assert.equal(calls, 3);
+  assert.equal(client.current.retries, 2);
+  assert.deepEqual(client.stats(), { retries: 2 });
+});

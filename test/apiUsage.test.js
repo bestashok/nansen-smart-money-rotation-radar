@@ -60,3 +60,28 @@ test("HTTP error responses still count as calls received by Nansen", async () =>
   assert.equal(usage.cumulativeRealNansenApiCalls, 1);
   assert.equal(usage.calls[0].status, 503);
 });
+
+test("usage tracking counts successful and failed responses separately", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "nansen-usage-"));
+  const usagePath = path.join(directory, "usage.json");
+  let attempt = 0;
+  const tracked = trackNansenUsage({
+    async post() {
+      attempt += 1;
+      if (attempt === 2) {
+        throw Object.assign(new Error("service unavailable"), { status: 503 });
+      }
+      return { data: { data: [] }, meta: { status: 200 } };
+    },
+  }, { usagePath });
+
+  await tracked.post("/ok", {});
+  await assert.rejects(() => tracked.post("/fail", {}), /service unavailable/);
+  await tracked.post("/ok", {});
+
+  assert.equal(tracked.current.successful, 2);
+  assert.equal(tracked.current.failed, 1);
+  assert.equal(tracked.current.attempts, 3);
+  assert.equal(tracked.current.calls, 3);
+  assert.equal(tracked.current.transportFailures, 0);
+});

@@ -10,7 +10,7 @@ It does **not** claim that funds moved directly from Token A to Token B. A rotat
 
 ## Demo
 
-[▶ Watch the 56-second product demo](demo/nansen-rotation-radar-demo.mp4)
+[▶ Watch the 54-second product demo](demo/nansen-smart-money-radar-demo.mp4)
 
 Normal use is intentionally simple:
 
@@ -18,7 +18,7 @@ Normal use is intentionally simple:
 Double-click Start Radar.bat → browser opens → choose 10–200 credits → Run Live Scan
 ```
 
-The dashboard also includes a separate **Live Scan 2 Campaign** for the [buildathon's 1,000-call requirement](https://nansen.ai/campaigns/meridian-buildathon#submit). It uses the same selected credit cap with a 200-credit maximum, broadens wallet research to as many as nine tokens per cycle, records real cross-token overlaps, and enforces a 15-minute cooldown between runs.
+The dashboard also includes a separate **Live Scan 2 Campaign** for the [buildathon's 1,000-call requirement](https://nansen.ai/campaigns/meridian-buildathon#submit). One run can send up to 909 genuine Nansen API calls behind a hard send-site guard that makes request 910 impossible, broadens wallet research across a staged token universe, records real cross-token overlaps, and enforces a 15-minute cooldown between runs.
 
 ## What the project answers
 
@@ -132,23 +132,29 @@ The scanner starts a research batch only when the conservative budget can fund c
 
 ## 1,000-call Live Scan 2 Campaign
 
-The buildathon campaign mode is meaningful research—not an API-call generator. With a 200-credit cap, one uncached cycle performs up to 20 calls:
+The buildathon campaign mode is meaningful research—not an API-call generator. One uncached run sends up to **909 genuine Nansen API calls** (the campaign's 875-credit ceiling and 5-credit safety reserve always keep the account above zero) through a staged planner:
 
 ```text
-1 Token Screener snapshot
-+ BUY and SELL wallet research across up to 9 tokens
-+ remaining flow-context calls when the discovered universe is smaller
-= up to 20 genuine Nansen calls
+Stage CORE      — 7d BUY/SELL wallet research, 1d Flow Intelligence,
+                  7d Flows for every discovered token
+Stage EXTENDED  — 30d and 90d BUY/SELL windows and 30d Flows (distinct
+                  date ranges, same proven request shapes)
+Stage HOLDERS   — paged holder research
++ iterative Token Screener discovery and lazy deep-page continuation
+  (a next page is requested only while Nansen returns a full page)
+= up to 909 genuine, distinct Nansen calls per run
 ```
 
-Every cycle produces a timestamped wallet snapshot and tests cross-token seller/buyer overlap across a much broader universe than the deep scan. The dashboard shows progress from the locally persisted genuine-call counter toward 1,000.
+Every actual HTTP request to Nansen—including each 429 retry—is counted against the 909 budget by a send-site guard, so request 910 can never leave the process. Cache hits, skipped tasks, and requests refused before transmission never consume the budget. The dashboard reports live progress as `Nansen API calls: N/909`, and the completion report lists calls sent, successful, failed, retries, budget remaining, and the reason a run stopped short of 909 (usually "no further distinct research requests were available").
 
 Safety rules:
 
-- the per-cycle credit maximum remains 200
-- a separate call-target guard prevents retries from exceeding the remaining calls to 1,000
+- a hard global cap of 909 real requests per run, enforced at the send site
+- the campaign credit guard uses Nansen's real per-request costs (1 credit for screener/who-bought-sold/flow-intelligence/flows, 5 for holders) under an 875-credit ceiling, so at least 4 of 879 credits stay unused
+- fatal aborts on configuration/authentication/plan/credit errors, and stop-after-10 streaks for transport or rate-limit failures
 - a 15-minute cooldown prevents duplicate snapshots inside the cache window
 - cache hits do not count toward the target
+- a new token, window, or page is requested only when it adds distinct evidence; the run stops early with an explicit reason rather than repeating identical requests
 - the campaign stops accepting runs when the genuine counter reaches 1,000
 - the user must start each cycle; the app never spends credits unattended
 

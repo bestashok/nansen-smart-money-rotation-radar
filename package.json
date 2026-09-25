@@ -13,6 +13,8 @@
     "gate:research": "node src/server/runResearchGate.js",
     "gate:rotation": "node src/server/runRotationGate.js",
     "scan:research": "node src/server/runFullResearch.js",
+    "dry:campaign": "node scripts/campaign-dry-run.mjs",
+    "repair:ledger": "node scripts/repair-ledger.mjs",
     "test": "node --test"
   },
   "dependencies": {

@@ -153,19 +153,26 @@ Latest results, scan history, cache, and request usage are persisted locally as 
 
 ## 9. Longitudinal Live Scan 2 Campaign
 
-The normal scan optimizes for deep evidence and reserves approximately 90 conservative credits per token. The Live Scan 2 Campaign instead optimizes for cross-token breadth while retaining the same fixed 200-credit ceiling.
+The normal scan optimizes for deep evidence and reserves approximately 90 conservative credits per token. The Live Scan 2 Campaign instead optimizes for breadth: one run makes up to **909 genuine Nansen API calls**, all counted by a send-site guard so request 910 can never be sent.
 
-A 200-credit campaign cycle allocates up to 20 lowest-cost calls:
+A run proceeds through staged, distinct research requests:
 
-1. One Token Screener snapshot.
-2. BUY and SELL wallet evidence for up to nine discovered tokens.
-3. Any remaining call slots add Flow Intelligence or Flows context.
-4. The rotation engine compares every token with complete BUY and SELL evidence.
-5. The timestamped cycle and any real edges are persisted locally.
+1. Iterative Token Screener discovery (pages continue while Nansen returns qualifying records).
+2. **Core stage:** 7d BUY/SELL wallet evidence, 1d Flow Intelligence, and 7d Flows for every discovered token.
+3. **Extended stage:** 30d and 90d BUY/SELL windows and 30d Flows—built from the same proven request shapes, only the `date` range differs.
+4. **Holdings stage:** paged holder research.
+5. Lazy deep pagination: a deeper page is requested only while Nansen returns a full page, so no empty filler requests are sent.
+6. The rotation engine compares every token with complete 7d BUY and SELL evidence; wider windows are stored as wallet counts.
+7. The timestamped cycle and any real edges are persisted locally.
 
-Cycles are separated by at least the configured 15-minute cache window. This makes repeated calls distinct market observations rather than immediate duplicate traffic. A call-target guard wraps the live request tracker, so HTTP retries cannot push cumulative usage past 1,000.
+Budget accounting has two independent guards:
 
-The campaign does not run automatically. The user explicitly starts every cycle and can select a hard cap from 10 through 200 credits.
+- **Call budget (909):** every real outbound HTTP request, including each 429 retry, is checked against the run cap at the send site immediately before transmission. Cache hits, skipped tasks, and requests refused by the credit guard happen outside this guard and never consume it.
+- **Credit budget (875 credits):** uses Nansen's observed real costs—1 credit for screener/who-bought-sold/flow-intelligence/flows and 5 for holders—so at least 4 of the account's 879 credits always remain unused. (The normal scan keeps its separate conservative 10/50-credit estimates.)
+
+Cycles are separated by at least the configured 15-minute cache window, making repeated calls distinct market observations rather than immediate duplicate traffic. Progress is published live as `Nansen API calls: N/909`, and the completion report records calls sent, successful, failed, retries, budget remaining, and an explicit stop reason when fewer than 909 calls were needed.
+
+The campaign does not run automatically. The user explicitly starts every cycle; the `creditLimit` body field remains validated as 10–200 for compatibility but does not reduce the campaign's call budget.
 
 ## 10. Interpretation limits
 

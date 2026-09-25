@@ -2,7 +2,7 @@
 
 ## 60-second review path
 
-1. Watch the [product demo](../demo/nansen-rotation-radar-demo.mp4).
+1. Watch the [product demo](../demo/nansen-smart-money-radar-demo.mp4).
 2. Read the architecture and pipeline in the [README](../README.md).
 3. Inspect the exact inference and scoring formulas in [METHODOLOGY.md](METHODOLOGY.md).
 4. Run `npm test` and `npm run build`.
@@ -32,9 +32,9 @@
 - Wallet overlap logic was verified against real evidence and synthetic unit boundaries without fabricating a positive rotation.
 - A strict 100-credit gate refused requests beyond its allowance.
 - The dashboard scan enforces an absolute 200-credit maximum.
-- Live Scan 2 Campaign broadens BUY/SELL evidence to as many as nine tokens per 200-credit cycle.
+- Live Scan 2 Campaign sends up to 909 genuine, distinct Nansen calls per run; a send-site guard makes request 910 impossible, and retries count against the same budget.
 - Concurrent usage persistence is serialized so campaign calls cannot be lost from the cumulative counter.
-- Current release: 32 automated tests passing and production build passing.
+- Current release: 50 automated tests passing, plus a local fake-Nansen dry run (`npm run dry:campaign`) that hits exactly 909/909 and never 910, and a production build passing.
 
 ## Honest-result policy
 

@@ -6,7 +6,7 @@ import { readUsage, trackNansenUsage } from "./apiUsage.js";
 import { withCreditBudget, CAMPAIGN_CREDIT_COSTS } from "./creditBudget.js";
 import { createCachedNansenClient } from "./cache.js";
 import { withRateLimitRetries } from "./retry.js";
-import { API_CALL_LIMIT, CREDIT_SAFETY_RESERVE, runEligibilityCampaign } from "./eligibilityCampaign.js";
+import { API_CALL_LIMIT, API_CALL_TARGET, CREDIT_SAFETY_RESERVE, runEligibilityCampaign } from "./eligibilityCampaign.js";
 import { campaignCallsRemaining, campaignCallsSent, readCampaignHistory, saveCampaignRun } from "./campaignStore.js";
 import { appendUsage, defaultUsagePath } from "./apiUsage.js";
 import { withCallBudget } from "./callBudget.js";
@@ -417,21 +417,37 @@ export function createApp() {
     const [history, usage] = await Promise.all([readCampaignHistory(), readUsage()]);
     const sent = campaignCallsSent(history);
     const remaining = campaignCallsRemaining(history);
+    // Genuine all-time calls made through BOTH the campaign and ordinary Live
+    // Scan runs. The 1,000-call buildathon target counts every real Nansen
+    // request, so it is the true denominator; the 909 figure only counts calls
+    // attributable to a recorded campaign cycle. The effective allowance is
+    // whichever of the two caps binds first, so the dashboard can never claim
+    // calls are left after the 1,000 all-time ceiling is reached.
+    const cumulative = usage.cumulativeRealNansenApiCalls ?? 0;
+    const cumulativeRemaining = Math.max(0, API_CALL_TARGET - cumulative);
+    const effectiveRemaining = Math.min(remaining, cumulativeRemaining);
+    const otherCalls = Math.max(0, cumulative - sent);
     const lastStartedAt = Date.parse(history[0]?.campaignStartedAt ?? "");
     const nextEligibleAt = Number.isFinite(lastStartedAt)
       ? new Date(lastStartedAt + campaignCooldownMs()).toISOString()
       : null;
     response.json({
       targetApiCalls: API_CALL_LIMIT,
+      allTimeTargetApiCalls: API_CALL_TARGET,
       campaignCallsSent: sent,
+      otherApiCalls: otherCalls,
+      allTimeApiCalls: cumulative,
+      allTimeCallsRemaining: cumulativeRemaining,
+      targetReached: effectiveRemaining === 0,
       cumulativeRealNansenApiCalls: usage.cumulativeRealNansenApiCalls,
       consumedCredits: creditsConsumed(usage),
       balance: lastKnownCredits(usage),
-      callsRemaining: remaining,
+      callsRemaining: effectiveRemaining,
+      campaignCallsRemaining: remaining,
       completedRuns: history.length,
       latest: history[0] ?? null,
       nextEligibleAt,
-      canRun: remaining > 0 &&
+      canRun: effectiveRemaining > 0 &&
         (!nextEligibleAt || Date.now() >= Date.parse(nextEligibleAt)),
     });
   });

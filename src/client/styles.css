@@ -29,6 +29,7 @@ button:disabled { opacity: .45; }
 .campaign-panel { border-color: #315447; background: linear-gradient(120deg, #101614, #10241c); }
 .campaign-layout { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 30px; }
 .campaign-layout p { max-width: 760px; margin: 10px 0 0; color: #8fa098; font-size: 13px; line-height: 1.6; }
+.campaign-layout p.campaign-split { color: #71f5b4; font: 11px/1.6 "DM Mono", ui-monospace, monospace; }
 .campaign-count { display: flex; align-items: baseline; gap: 10px; }
 .live-api-count { margin-top: 14px; }
 .live-api-count strong { font-size: 26px; }

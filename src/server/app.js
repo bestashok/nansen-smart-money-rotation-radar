@@ -202,25 +202,22 @@ export function createApp() {
     // spendable credits and the remaining cumulative buildathon budget
     // (1,000 - cumulativeRealCalls).
     //
-    // KNOWN DEFECT - this guard FAILS OPEN, not closed. `loadUsage` in
-    // apiUsage.js returns `cumulativeRealNansenApiCalls: 0` when the ledger
-    // cannot be read, and `0 ?? null` is `0`, so the "unknown" branch below is
-    // unreachable. A transient read failure therefore yields
-    // remainingCumulative = 1000 instead of 0, granting the full budget for
-    // that run. This is what produced the 1,011-call overshoot on 2026-09-25.
-    // See docs/POSTMORTEM.md. The correct behaviour is to fail closed (0).
-    // Left unfixed on purpose after the final run; no calls were made after.
+    // The all-time guard FAILS CLOSED. If the ledger cannot be read the count
+    // is unknown, and an unknown count must never be treated as zero-because-
+    // nothing-sent: that mistake is what let the 2026-09-25 run overshoot to
+    // 1,011 calls (see docs/POSTMORTEM.md). We cannot prove headroom without
+    // the ledger, so we allow zero requests until it can be read again.
     const balance = ledger.creditsRemaining ?? lastKnownCredits(usageBefore);
     const spendableCredits = balance == null
       ? null
       : Math.max(0, Math.floor(Number(balance)) - CREDIT_SAFETY_RESERVE);
     // Remaining cumulative buildathon budget: 1,000 - cumulativeRealCalls.
-    // NOTE: this is NOT safe when the ledger read fails - see the KNOWN DEFECT
-    // note above. `?? null` cannot catch the 0 that loadUsage returns.
+    // A null count means the ledger is unreadable. Fail closed: 0 may still be
+    // sent, because we cannot prove how much of the 1,000 has been used.
     const cumulativeReal = (await readUsage()).cumulativeRealNansenApiCalls ?? null;
     const remainingCumulative = cumulativeReal == null
-      ? Number.POSITIVE_INFINITY
-      : Math.max(0, 1000 - cumulativeReal);
+      ? 0
+      : Math.max(0, API_CALL_TARGET - cumulativeReal);
     console.log(`[verify] raw Nansen balance: ${balance} credits`);
     console.log(`[verify] usable credits (balance - 5 reserve): ${spendableCredits}`);
     console.log(`[verify] safety reserve held untouched: ${CREDIT_SAFETY_RESERVE}`);
@@ -239,11 +236,14 @@ export function createApp() {
         error: `Nansen balance is too low for a research cycle: ${balance} credits remain, but at least ${required} are needed (${MIN_CREDIT_BUDGET} to spend while keeping a ${CREDIT_SAFETY_RESERVE}-credit safety reserve).`,
       });
     }
-    if (spendableCredits != null && spendableCredits < MIN_CREDIT_BUDGET) {
-      const required = MIN_CREDIT_BUDGET + CREDIT_SAFETY_RESERVE;
-      return response.status(402).json({
-        error: `Nansen balance is too low for a research cycle: ${balance} credits remain, but at least ${required} are needed (${MIN_CREDIT_BUDGET} to spend while keeping a ${CREDIT_SAFETY_RESERVE}-credit safety reserve).`,
-      });
+    // Fail closed on an unreadable ledger. remainingCumulative is 0 in that
+    // case, so the bound collapses and no Nansen request may be sent. Refuse
+    // with a clear 409 instead of starting a run that would immediately abort.
+    if (boundedRunCallLimit <= 0) {
+      const reason = cumulativeReal == null
+        ? "the usage ledger could not be read, so the remaining budget cannot be proven"
+        : `the ${API_CALL_TARGET}-call all-time target is already reached (${cumulativeReal} recorded)`;
+      return response.status(409).json({ error: `No further calls can be sent: ${reason}.` });
     }
     const lastStartedAt = Date.parse(history[0]?.campaignStartedAt ?? "");
     const nextEligibleAt = Number.isFinite(lastStartedAt) ? lastStartedAt + campaignCooldownMs() : 0;
@@ -430,10 +430,14 @@ export function createApp() {
     // attributable to a recorded campaign cycle. The effective allowance is
     // whichever of the two caps binds first, so the dashboard can never claim
     // calls are left after the 1,000 all-time ceiling is reached.
-    const cumulative = usage.cumulativeRealNansenApiCalls ?? 0;
-    const cumulativeRemaining = Math.max(0, API_CALL_TARGET - cumulative);
-    const effectiveRemaining = Math.min(remaining, cumulativeRemaining);
-    const otherCalls = Math.max(0, cumulative - sent);
+    //
+    // An unreadable ledger reports no all-time total and no remaining budget,
+    // matching the fail-closed rule the campaign route enforces.
+    const ledgerKnown = Number.isSafeInteger(usage.cumulativeRealNansenApiCalls);
+    const cumulative = ledgerKnown ? usage.cumulativeRealNansenApiCalls : null;
+    const cumulativeRemaining = ledgerKnown ? Math.max(0, API_CALL_TARGET - cumulative) : 0;
+    const effectiveRemaining = ledgerKnown ? Math.min(remaining, cumulativeRemaining) : 0;
+    const otherCalls = ledgerKnown ? Math.max(0, cumulative - sent) : null;
     const lastStartedAt = Date.parse(history[0]?.campaignStartedAt ?? "");
     const nextEligibleAt = Number.isFinite(lastStartedAt)
       ? new Date(lastStartedAt + campaignCooldownMs()).toISOString()

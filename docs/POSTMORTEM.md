@@ -1,7 +1,7 @@
 # Postmortem: 1,011 genuine Nansen calls (11 over the 1,000 target)
 
 **Date of run:** 2026-09-25 19:54 IST
-**Status:** disclosed, not remediated. No further live Nansen calls were made after this run.
+**Status:** disclosed and remediated. The 1,011 calls stand; the defect is fixed.
 **Ledger:** `data/api-usage.json` is unaltered. `cumulativeRealNansenApiCalls = 1011`.
 
 ## Summary
@@ -106,15 +106,75 @@ depends on a ledger read at run start — failed.
 - The call record was not edited, trimmed, or reconciled after the fact. Correcting the number
   would misrepresent what was actually sent.
 
-## What was not done
+## Remediation
 
-No code change was made to remediate this. The fail-open fallback described above is still present
-in `src/server/apiUsage.js` and `src/server/app.js`. No live Nansen calls were made after the
-overshoot, so the defect could not be triggered again, but it remains a live defect in the
-codebase and should be treated as such.
+The defect has been fixed. The all-time guard now **fails closed**.
 
-The correct remediation, for the record, is to fail **closed**: an unreadable ledger must produce a
-remaining budget of `0`, never `1000`.
+### 1. An unreadable ledger is reported as unknown, not as zero
+
+`src/server/apiUsage.js`, `loadUsage()` now distinguishes three cases:
+
+| Situation | Result |
+|---|---|
+| File does not exist (`ENOENT`) | `cumulativeRealNansenApiCalls: 0` — a real, trustworthy zero |
+| File unreadable or unparseable | `cumulativeRealNansenApiCalls: null`, `ledgerUnreadable: true` |
+| File valid | the parsed ledger |
+
+Reads and parses are retried (`LEDGER_READ_ATTEMPTS = 5`, `LEDGER_READ_BACKOFF_MS = 20`) because
+the failures that caused this were transient Windows locks that clear within milliseconds.
+
+### 2. The all-time guard treats unknown as zero remaining
+
+`src/server/app.js`:
+
+```js
+const cumulativeReal = (await readUsage()).cumulativeRealNansenApiCalls ?? null;
+const remainingCumulative = cumulativeReal == null
+  ? 0                                                    // was: Number.POSITIVE_INFINITY
+  : Math.max(0, API_CALL_TARGET - cumulativeReal);
+```
+
+The `Number.POSITIVE_INFINITY` branch was the fail-open path. It is now `0`. An unreadable ledger
+allows no requests at all, because remaining headroom cannot be proven.
+
+### 3. The bound collapses cleanly instead of aborting mid-run
+
+A collapsed bound now returns a `409` before the run starts:
+
+```js
+if (boundedRunCallLimit <= 0) { /* clear reason, no requests sent */ }
+```
+
+### 4. Recording refuses to corrupt the ledger
+
+`appendUsage()` previously would have executed `null + 1`, silently resetting the cumulative
+counter to `1`. It now throws instead, and `readUsage()` no longer lets a failed write poison
+subsequent reads.
+
+### 5. Display follows the same rule
+
+`/api/campaign` reports no all-time total and no remaining budget when the ledger is unreadable,
+instead of showing a phantom `1,000` remaining.
+
+## Verification of the fix
+
+Replaying the exact failing scenario — a 247-call run with 300 spendable credits and an unreadable
+ledger:
+
+| | Before | After |
+|---|---|---|
+| `remainingCumulative` | 1000 | **0** |
+| `boundedRunCallLimit` | 247 | **0** |
+| Outcome | 11 calls over the cap | 0 calls, `409` |
+
+`test/ledgerFailClosed.test.js` pins this behaviour, including a direct assertion that the
+pre-fix expression granted the full 247-call budget.
+
+## Not done
+
+- The 1,011 calls are not retracted or reconciled. The record reflects what was actually sent.
+- No live Nansen calls were made after the overshoot, so the fix has not been exercised against
+  the live API. It is verified by unit tests and a simulated reproduction only.
 
 ## Timeline
 

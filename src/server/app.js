@@ -200,19 +200,23 @@ export function createApp() {
     // calculate spendable credits as balance - 5 (the safety reserve that is
     // never spent). The production run is then capped at the smaller of
     // spendable credits and the remaining cumulative buildathon budget
-    // (1,000 - cumulativeRealCalls). This guarantees cumulative genuine
-    // Nansen API usage can never exceed 1,000, the competition source of
-    // truth. A null or missing cumulative count falls back to the older
-    // 1,000-call buildathon cap (909 campaign + 91 pre-campaign = 1,000)
-    // so the rule degrades safely rather than stopping the run.
+    // (1,000 - cumulativeRealCalls).
+    //
+    // KNOWN DEFECT - this guard FAILS OPEN, not closed. `loadUsage` in
+    // apiUsage.js returns `cumulativeRealNansenApiCalls: 0` when the ledger
+    // cannot be read, and `0 ?? null` is `0`, so the "unknown" branch below is
+    // unreachable. A transient read failure therefore yields
+    // remainingCumulative = 1000 instead of 0, granting the full budget for
+    // that run. This is what produced the 1,011-call overshoot on 2026-09-25.
+    // See docs/POSTMORTEM.md. The correct behaviour is to fail closed (0).
+    // Left unfixed on purpose after the final run; no calls were made after.
     const balance = ledger.creditsRemaining ?? lastKnownCredits(usageBefore);
     const spendableCredits = balance == null
       ? null
       : Math.max(0, Math.floor(Number(balance)) - CREDIT_SAFETY_RESERVE);
     // Remaining cumulative buildathon budget: 1,000 - cumulativeRealCalls.
-    // At 742 accumulated calls that is 258 genuine calls that may still be
-    // sent. If the ledger has not been polled yet, fall back to the older
-    // 1,000-call buildathon cap so no existing run is incorrectly capped.
+    // NOTE: this is NOT safe when the ledger read fails - see the KNOWN DEFECT
+    // note above. `?? null` cannot catch the 0 that loadUsage returns.
     const cumulativeReal = (await readUsage()).cumulativeRealNansenApiCalls ?? null;
     const remainingCumulative = cumulativeReal == null
       ? Number.POSITIVE_INFINITY

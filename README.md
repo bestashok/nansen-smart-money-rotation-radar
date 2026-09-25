@@ -12,6 +12,13 @@ It does **not** claim that funds moved directly from Token A to Token B. A rotat
 
 [▶ Watch the 54-second product demo](demo/nansen-smart-money-radar-demo.mp4)
 
+> **Disclosure — the final run made 1,011 genuine Nansen calls, 11 over the 1,000 target.**
+> The 909-call campaign cap held exactly (request 910 was never sent). The separate
+> 1,000-call all-time guard failed open: when the usage ledger could not be read, the code
+> treated the count as `0` rather than unknown, granting the full 1,000-call budget for that
+> run. The call record was not edited afterwards. Full analysis, including why a cap that
+> fails open is the more serious defect, is in **[docs/POSTMORTEM.md](docs/POSTMORTEM.md)**.
+
 Normal use is intentionally simple:
 
 ```text

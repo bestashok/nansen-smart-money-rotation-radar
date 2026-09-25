@@ -4,6 +4,12 @@ import path from "node:path";
 export const defaultUsagePath = path.resolve("data/api-usage.json");
 let usageWriteQueue = Promise.resolve();
 
+// KNOWN DEFECT: on a read/parse failure this returns 0, not null/undefined.
+// Callers cannot distinguish "no calls yet" from "ledger unreadable", and the
+// 1,000-call all-time guard in app.js does `?? null`, which does not catch 0.
+// An unreadable ledger therefore re-opens the full 1,000-call budget. This
+// caused the 2026-09-25 overshoot to 1,011 calls. Correct fix: fail closed.
+// See docs/POSTMORTEM.md. Left unfixed on purpose; no calls were made after.
 async function loadUsage(usagePath) {
   try {
     return JSON.parse(await readFile(usagePath, "utf8"));

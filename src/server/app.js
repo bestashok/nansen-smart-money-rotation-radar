@@ -324,7 +324,7 @@ export function createApp() {
         Object.assign(status, {
           running: false,
           phase: "CAMPAIGN_COMPLETE",
-          message: `Research cycle complete — ${totals.totalCalls}/${runCallLimit} calls sent this run (${totals.successfulCalls} successful, ${totals.failedCalls} failed, ${totals.retries} retries), campaign total ${campaignCallsSentAfter}/${API_CALL_LIMIT}, ${result.rotations.length} probable rotations.${result.stopReason ? ` ${result.stopReason}` : ""}`,
+          message: `Research cycle complete - ${totals.totalCalls}/${runCallLimit} calls sent this run (${totals.successfulCalls} successful, ${totals.failedCalls} failed, ${totals.retries} retries), ${usageAfter.cumulativeRealNansenApiCalls} / ${API_CALL_TARGET} genuine Nansen calls all time (${campaignCallsSentAfter} from campaign cycles), ${result.rotations.length} probable rotations.${result.stopReason ? ` ${result.stopReason}` : ""}`,
         });
       })
       .catch(async (error) => {
@@ -363,7 +363,7 @@ export function createApp() {
         Object.assign(status, {
           running: false,
           phase: "FAILED",
-          message: `${error.message} — ${totals.totalCalls}/${runCallLimit} Nansen API calls sent this run (${totals.successfulCalls} successful, ${totals.failedCalls} failed, ${totals.retries} retries), campaign total ${campaignCallsSentAfter}/${API_CALL_LIMIT}.`,
+          message: `${error.message} — ${totals.totalCalls}/${runCallLimit} Nansen API calls sent this run (${totals.successfulCalls} successful, ${totals.failedCalls} failed, ${totals.retries} retries), ${(await readUsage()).cumulativeRealNansenApiCalls} / ${API_CALL_TARGET} genuine Nansen calls all time (${campaignCallsSentAfter} from campaign cycles).`,
         });
       })
       .finally(() => { liveRun.chain = null; });
@@ -395,8 +395,11 @@ export function createApp() {
       ...status,
       ...totals,
       apiCallLimit: API_CALL_LIMIT,
+      allTimeCallLimit: API_CALL_TARGET,
       campaignCallsSent: sent,
+      allTimeCallsSent: cumulativeReal,
       apiCallsRemaining: Math.max(0, API_CALL_LIMIT - sent),
+      allTimeCallsRemaining: cumulativeReal == null ? null : Math.max(0, API_CALL_TARGET - cumulativeReal),
       cumulativeRealNansenApiCalls: cumulativeReal,
       remainingCumulativeBudget: cumulativeReal == null ? null : Math.max(0, 1000 - cumulativeReal),
       creditsRemaining: liveBalance,

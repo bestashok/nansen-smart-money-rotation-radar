@@ -69,7 +69,7 @@ function TokenDetail({ item }) {
 }
 
 export default function App() {
-  const [status, setStatus] = useState({ phase: "IDLE", running: false, message: "Ready for a live scan.", apiCallLimit: 909, campaignCallsSent: 0, runCallLimit: null, totalCalls: 0, successfulCalls: 0, failedCalls: 0, retries: 0, creditsReserved: 0, creditsRemainingFromBudget: null, spendableCredits: null });
+  const [status, setStatus] = useState({ phase: "IDLE", running: false, message: "Ready for a live scan.", apiCallLimit: 909, allTimeCallLimit: 1000, campaignCallsSent: 0, allTimeCallsSent: 0, runCallLimit: null, totalCalls: 0, successfulCalls: 0, failedCalls: 0, retries: 0, creditsReserved: 0, creditsRemainingFromBudget: null, spendableCredits: null });
   const [results, setResults] = useState(null);
   const [usage, setUsage] = useState({ cumulativeRealNansenApiCalls: 0, consumedCredits: 0 });
   const [campaign, setCampaign] = useState({ targetApiCalls: 909, allTimeTargetApiCalls: 1000, campaignCallsSent: 0, otherApiCalls: 0, allTimeApiCalls: 0, cumulativeRealNansenApiCalls: 0, callsRemaining: 909, completedRuns: 0, latest: null, canRun: true });
@@ -127,7 +127,7 @@ export default function App() {
   return <main>
     <header><div><p className="eyebrow">NANSEN · MULTI-CHAIN INTELLIGENCE</p><h1>SMART MONEY<br /><em>ROTATION RADAR</em></h1><p className="subtitle">See where Smart Money appears to be rotating before the crowd.</p></div><div className="scan-controls"><label>Maximum Nansen credits<input type="number" min="10" max="200" step="10" value={creditLimit} disabled={status.running} onChange={(event) => setCreditLimit(event.target.value)} /></label><small>Default 200 · maximum 200 · no token-count limit · conservative safety accounting</small><button disabled={status.running || !Number.isSafeInteger(Number(creditLimit)) || Number(creditLimit) < 10 || Number(creditLimit) > 200} onClick={runScan}>{status.running ? "SCAN IN PROGRESS" : "RUN LIVE SCAN"}</button></div></header>
 
-    <section className={`status ${status.phase === "FAILED" || scanError ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")} · CAMPAIGN HARD CAP {status.apiCallLimit ?? 909} CALLS · SENT {status.campaignCallsSent ?? 0}/{status.apiCallLimit ?? 909}</label><strong>{scanError || status.message}</strong></div></section>
+    <section className={`status ${status.phase === "FAILED" || scanError ? "danger" : ""}`}><span className={status.running ? "pulse" : "dot"} /><div><label>{status.phase.replaceAll("_", " ")} · {status.allTimeCallsSent ?? 0}/{status.allTimeCallLimit ?? 1000} GENUINE NANSEN CALLS ALL TIME · {status.campaignCallsSent ?? 0} FROM CAMPAIGN</label><strong>{scanError || status.message}</strong></div></section>
 
     <section className="metrics">
       <article><label>Qualifying tokens</label><strong>{results?.tokensDiscovered ?? "—"}</strong></article>

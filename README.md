@@ -1,6 +1,8 @@
 # Nansen Smart Money Rotation Radar
 
-> See where Smart Money appears to be rotating before the crowd.
+> See where Smart Money is buying & appears to be rotating before the crowd.
+
+Yup you not only see where smart money is buying but also their next buy, now that's one smart radar
 
 An autonomous multi-chain research application built entirely on the Nansen API. It discovers qualifying tokens, researches real Smart Money buyers and sellers, detects cross-token wallet overlap, and ranks probable rotation destinations with transparent evidence.
 

@@ -1,5 +1,8 @@
 # Nansen Smart Money Rotation Radar
 
+[![verify](https://github.com/bestashok/nansen-smart-money-rotation-radar/actions/workflows/verify.yml/badge.svg)](https://github.com/bestashok/nansen-smart-money-rotation-radar/actions/workflows/verify.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > See where Smart Money is buying & appears to be rotating before the crowd.
 
 Yup you not only see where smart money is buying but also their next buy, now that's one smart radar
@@ -253,6 +256,7 @@ Current release status:
 - 77 automated tests passing
 - production build passing
 - npm production dependency audit: zero known vulnerabilities at release time
+- every push re-runs tests, build, the fake-Nansen dry run and the audit in GitHub Actions (`.github/workflows/verify.yml`), so the figures above cannot silently go stale
 - one-click launcher verified locally
 - live Nansen discovery and wallet-level buyer/seller gates verified during development
 

@@ -13,7 +13,7 @@ It does **not** claim that funds moved directly from Token A to Token B. A rotat
 [▶ Watch the 54-second product demo](demo/nansen-smart-money-radar-demo.mp4)
 
 Posted as required by the buildathon:
-[▶ Demo post on X](https://x.com/ibestashok/status/2103454925279941010)
+[▶ Demo post on X](https://x.com/ibestashok/status/2103776447240474768)
 
 > **1,011 genuine Nansen API calls — the buildathon asks for 1,000, and this build exceeds it.**
 > The competition sets 1,000 calls as a *minimum* to prove the API was really used; it states

@@ -28,7 +28,7 @@ export function campaignCallsSent(history = []) {
 }
 
 // Hard maximum for the next continuation: whatever is left of the campaign's
-// API_CALL_LIMIT total (909 - 620 already sent = 289 today). Never negative.
+// API_CALL_LIMIT total (909 - calls already sent). Never negative.
 export function campaignCallsRemaining(history = [], limit = API_CALL_LIMIT) {
   return Math.max(0, limit - campaignCallsSent(history));
 }

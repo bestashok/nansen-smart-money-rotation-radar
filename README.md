@@ -192,7 +192,7 @@ If no wallet overlap exists, the rotation map shows a truthful zero-rotation sta
 ### Requirements
 
 - Windows
-- Node.js 20 or newer
+- Node.js 20.19 or newer (22.12+ recommended; Vite 7 requires `^20.19.0 || >=22.12.0`)
 - a Nansen API key with sufficient credits
 
 ### Setup
@@ -245,7 +245,7 @@ npm run build
 
 Current release status:
 
-- 32 automated tests passing
+- 77 automated tests passing
 - production build passing
 - npm production dependency audit: zero known vulnerabilities at release time
 - one-click launcher verified locally
@@ -264,3 +264,7 @@ See [JUDGING_GUIDE.md](docs/JUDGING_GUIDE.md) for a fast feature-to-evidence map
 ## Technology
 
 Node.js · Express · React 19 · Vite · plain JavaScript · local JSON persistence
+
+## License
+
+[MIT](LICENSE)

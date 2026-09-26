@@ -34,7 +34,7 @@
 - The dashboard scan enforces an absolute 200-credit maximum.
 - Live Scan 2 Campaign sends up to 909 genuine, distinct Nansen calls per run; a send-site guard makes request 910 impossible, and retries count against the same budget.
 - Concurrent usage persistence is serialized so campaign calls cannot be lost from the cumulative counter.
-- Current release: 71 automated tests passing, plus a local fake-Nansen dry run (`npm run dry:campaign`) that hits exactly 909/909 and never 910, and a production build passing.
+- Current release: 77 automated tests passing, plus a local fake-Nansen dry run (`npm run dry:campaign`) that hits exactly 909/909 and never 910, and a production build passing.
 
 ## Honest-result policy
 

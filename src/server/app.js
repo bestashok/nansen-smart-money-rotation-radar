@@ -120,7 +120,7 @@ export function createApp() {
   const liveRun = { chain: null };
   const lastRun = { totalCalls: 0, successfulCalls: 0, failedCalls: 0, retries: 0, creditsReserved: 0, creditLimit: null, creditsRemainingFromBudget: null };
   // Persistent view of the campaign ledger (genuine calls already made by
-  // every recorded cycle) so /api/status can show "620/909" style totals
+  // every recorded cycle) so /api/status can show "N/909" style totals
   // without reading the history file on every poll.
   const ledger = { campaignCallsSent: 0, creditsRemaining: null };
   readCampaignHistory()
@@ -188,7 +188,7 @@ export function createApp() {
     const history = await readCampaignHistory();
     const callsAlreadySent = campaignCallsSent(history);
     // Hard maximum for THIS campaign continuation: whatever is left of the
-    // campaign's API_CALL_LIMIT total (909 - 620 already sent = 289 today).
+    // campaign's API_CALL_LIMIT total (909 - callsAlreadySent).
     // Retries count toward it, so request number runCallLimit + 1 can never
     // leave the process.
     const runCallLimit = campaignCallsRemaining(history);

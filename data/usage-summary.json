@@ -31,7 +31,7 @@
     "note": "This 1,000 figure is a safety cap inside this repository, not a competition limit. During the final run it failed open when the usage ledger could not be read, permitting 247 calls where 236 remained. The guard now fails closed; see docs/POSTMORTEM.md and test/ledgerFailClosed.test.js."
   },
   "verification": {
-    "testCount": 71,
+    "testCount": 77,
     "testCommand": "npm test",
     "dryRunCommand": "npm run dry:campaign",
     "dryRunResult": "909/909 sent against a fake local Nansen; request 910 never sent; no real API calls",

@@ -15,6 +15,11 @@ It does **not** claim that funds moved directly from Token A to Token B. A rotat
 Posted as required by the buildathon:
 [▶ Demo post on X](https://x.com/ibestashok/status/2103776447240474768)
 
+The Live Scan 2 Campaign panel, showing the real all-time call count, the completed
+909-call campaign cap, and the latest genuine rotation edge:
+
+![Live Scan 2 Campaign panel: 1,011 of 1,000 genuine Nansen calls all time, 12 completed cycles, 952 from campaign cycles plus 59 from plain Run Live Scan, and the latest observed rotation edge](docs/dashboard-campaign.png)
+
 > **1,011 genuine Nansen API calls — the buildathon asks for 1,000, and this build exceeds it.**
 > The competition sets 1,000 calls as a *minimum* to prove the API was really used; it states
 > no ceiling. The 1,000 figure is a self-imposed budget inside this repo, and during the final
